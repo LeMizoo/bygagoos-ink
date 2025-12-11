@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  backend:
+    image: node:18-alpine
+    container_name: bygagoos-simple-backend
+    ports:
+      - "5000:5000"
+    working_dir: /app
+    command: >
+      sh -c "
+      npm init -y &&
+      npm install express cors &&
+      echo 'const express = require(\"express\"); 
+      const cors = require(\"cors\"); 
+      const app = express(); 
+      app.use(cors()); 
+      app.get(\"/health\", (req, res) => res.json({status:\"healthy\",service:\"ByGagoos\"})); 
+      app.get(\"/api/family\", (req, res) => res.json({members:[
+        {name:\"Tovoniaina\",role:\"Structure\"},
+        {name:\"Volatiana\",role:\"Inspiration\"},
+        {name:\"Miantsatiana\",role:\"Création\"},
+        {name:\"Tia Faniry\",role:\"Communication\"}
+      ]})); 
+      app.listen(5000, \"0.0.0.0\", () => console.log(\"✅ Backend en ligne\"));' > server.js &&
+      node server.js
+      "
+    networks:
+      - bygagoos-net
+
+  frontend:
+    image: nginx:alpine
+    container_name: bygagoos-simple-frontend
+    ports:
+      - "3000:80"
+    volumes:
+      - ./simple-frontend:/usr/share/nginx/html
+    networks:
+      - bygagoos-net
+
+networks:
+  bygagoos-net:

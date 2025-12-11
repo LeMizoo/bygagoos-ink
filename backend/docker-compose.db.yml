@@ -1,0 +1,32 @@
+# backend/docker-compose.db.yml
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: bygagoos-db
+    environment:
+      POSTGRES_USER: bygagoos
+      POSTGRES_PASSWORD: ByGagoos2025!
+      POSTGRES_DB: bygagoos_ink
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: bygagoos-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@bygagoos.com
+      PGADMIN_DEFAULT_PASSWORD: ByGagoos2025!
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

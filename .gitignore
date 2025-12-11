@@ -1,0 +1,83 @@
+# ======================================
+# DÉPENDANCES ET COMPILATION
+# ======================================
+# Dépendances Node - NE PAS PUSHER
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Dossiers de build/compilation
+dist/
+build/
+.out/
+.next/
+
+# Cache des outils de build
+.cache/
+.vite/
+.turbo/
+
+# ======================================
+# VARIABLES D'ENVIRONNEMENT - TRÈS IMPORTANT !
+# ======================================
+# NE JAMAIS PARTAGER LES CLÉS SECRÈTES !
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env*.local
+
+# Fichiers d'environnement spécifiques Vercel
+.vercel
+
+# ======================================
+# SYSTÈME & IDEs
+# ======================================
+# Fichiers système
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE/Editeurs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ======================================
+# SPÉCIFIQUE AU BACKEND (Node.js/Express)
+# ======================================
+# Logs serveur
+logs/
+*.log
+
+# Dossiers temporaires ou uploads (si applicable)
+uploads/
+temp/
+
+# ======================================
+# SPÉCIFIQUE AU FRONTEND (React/Vite)
+# ======================================
+# Coverage
+coverage/
+*.lcov
+
+# ======================================
+# BASE DE DONNÉES (si vous en ajoutez plus tard)
+# ======================================
+# Fichiers SQLite
+*.db
+*.sqlite
+*.sqlite3
+
+# Dumps de base de données
+*.dump
+
+# ======================================
+# DOCKER (optionnel)
+# ======================================
+docker-compose.override.yml

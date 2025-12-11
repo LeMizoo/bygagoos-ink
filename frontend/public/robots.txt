@@ -1,0 +1,7 @@
+# Robots.txt for ByGagoos-Ink
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+
+Sitemap: https://bygagoos-ink.com/sitemap.xml

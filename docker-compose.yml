@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    container_name: bygagoos-backend
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=development
+      - PORT=5000
+      - FRONTEND_URL=http://localhost:3000
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - images_volume:/app/public/images
+    networks:
+      - bygagoos-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:5000/health').catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    command: >
+      sh -c "mkdir -p /app/public/images/profiles && 
+             echo '📁 Structure des images initialisée' && 
+             node app.js"
+
+  frontend:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: bygagoos-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://localhost:5000
+      - VITE_APP_VERSION=1.1.0
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - frontend_images:/app/public
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - bygagoos-network
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  images_volume:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./backend/public/images
+  frontend_images:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./frontend/public
+
+networks:
+  bygagoos-network:
+    driver: bridge
