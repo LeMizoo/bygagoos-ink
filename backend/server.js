@@ -9,51 +9,58 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || 'bygagoos-dev-secret-2025';
-const LOCAL_IP = getLocalIP();
 
-// Middleware
+// ============================================
+// MIDDLEWARE CORS OPTIMISÉ POUR DEV & PROD
+// ============================================
 const allowedOrigins = [
+  // Développement local
   'http://localhost:5173',
-  'http://localhost:3000',
-  'http://localhost',
   'http://127.0.0.1:5173',
+  'http://localhost:3000',
   'http://127.0.0.1:3000',
-  // Réseau local (dynamique)
-  `http://${require('os').hostname().toLowerCase()}.local`,
-  `http://${getLocalIP()}`
+  'http://localhost',
+  'http://localhost:8080',
+  
+  // Production Vercel - AJOUT CRITIQUE !
+  'https://bygagoos-app.vercel.app',
+  'https://bygagoos-itkg7xpfx-tovoniaina-rahendrisons-projects.vercel.app',
+  
+  // Optionnel: réseau local dynamique (gardé de la v2)
+  `http://${require('os').hostname().toLowerCase()}.local`
 ];
 
-function getLocalIP() {
-  try {
-    const os = require('os');
-    const interfaces = os.networkInterfaces();
-    for (const name of Object.keys(interfaces)) {
-      for (const iface of interfaces[name]) {
-        if (iface.family === 'IPv4' && !iface.internal) {
-          return iface.address;
-        }
-      }
-    }
-  } catch (e) {}
-  return 'localhost';
-}
+// Fonction utilitaire pour extraire le host d'une URL
+const extractHost = (url) => url.split('//')[1] || url;
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.some(allowed => {
-      const originHost = origin.split('//')[1];
-      const allowedHost = allowed.split('//')[1];
+    // Permettre les requêtes sans origin (ex: curl, Postman)
+    if (!origin) {
+      return callback(null, true);
+    }
+    
+    // Vérifier si l'origine est dans la liste autorisée
+    const originHost = extractHost(origin);
+    const isAllowed = allowedOrigins.some(allowed => {
+      const allowedHost = extractHost(allowed);
       return originHost === allowedHost;
-    })) {
+    });
+    
+    if (isAllowed) {
       callback(null, true);
     } else {
+      console.warn('❌ CORS bloqué pour:', origin);
       callback(new Error('CORS not allowed'));
     }
   },
   credentials: true
 }));
+
+// ============================================
+// AUTRE MIDDLEWARE
+// ============================================
 app.use(express.json());
-// Servir les fichiers publics (images, logos, etc.)
 app.use('/public', express.static(path.join(__dirname, 'public')));
 
 // Middleware d'authentification
@@ -74,7 +81,9 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// Data en mémoire pour développement
+// ============================================
+// DONNÉES EN MÉMOIRE POUR DÉVELOPPEMENT
+// ============================================
 let users = [
   {
     id: '1',
@@ -134,7 +143,11 @@ let users = [
   }
 ];
 
-// Routes
+// ============================================
+// ROUTES
+// ============================================
+
+// GET /api/health
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'OK',
