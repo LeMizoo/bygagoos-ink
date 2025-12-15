@@ -1,67 +1,77 @@
-// backend/server.js - Serveur minimal pour développement
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3002;
 const JWT_SECRET = process.env.JWT_SECRET || 'bygagoos-dev-secret-2025';
 
-// ============================================
-// MIDDLEWARE CORS OPTIMISÉ POUR DEV & PROD
-// ============================================
+// ======================
+// CONFIGURATION CORS POUR VERCEL
+// ======================
 const allowedOrigins = [
-  // Développement local
   'http://localhost:5173',
-  'http://127.0.0.1:5173',
   'http://localhost:3000',
-  'http://127.0.0.1:3000',
-  'http://localhost',
-  'http://localhost:8080',
-  
-  // Production Vercel - AJOUT CRITIQUE !
-  'https://bygagoos-app.vercel.app',
-  'https://bygagoos-itkg7xpfx-tovoniaina-rahendrisons-projects.vercel.app',
-  
-  // Optionnel: réseau local dynamique (gardé de la v2)
-  `http://${require('os').hostname().toLowerCase()}.local`
+  'https://bygagoos-ink.vercel.app',
+  'https://bygagoos-ink-*.vercel.app',
+  'https://bygagoos-ink-git-*.vercel.app'
 ];
 
-// Fonction utilitaire pour extraire le host d'une URL
-const extractHost = (url) => url.split('//')[1] || url;
-
-app.use(cors({
-  origin: (origin, callback) => {
-    // Permettre les requêtes sans origin (ex: curl, Postman)
-    if (!origin) {
-      return callback(null, true);
-    }
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Autoriser les requêtes sans origine (curl, postman, apps mobiles, etc.)
+    if (!origin) return callback(null, true);
     
     // Vérifier si l'origine est dans la liste autorisée
-    const originHost = extractHost(origin);
     const isAllowed = allowedOrigins.some(allowed => {
-      const allowedHost = extractHost(allowed);
-      return originHost === allowedHost;
+      // Gérer les wildcards (*.vercel.app)
+      const pattern = allowed.replace('*', '.*');
+      return new RegExp(pattern).test(origin);
     });
     
     if (isAllowed) {
       callback(null, true);
     } else {
-      console.warn('❌ CORS bloqué pour:', origin);
-      callback(new Error('CORS not allowed'));
+      console.log('��� CORS blocked for origin:', origin);
+      console.log('✅ Allowed origins:', allowedOrigins);
+      callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: true
-}));
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-Requested-With',
+    'Accept',
+    'Origin',
+    'Access-Control-Request-Method',
+    'Access-Control-Request-Headers'
+  ],
+  exposedHeaders: ['Content-Length', 'Authorization'],
+  maxAge: 86400, // Cache preflight pendant 24h
+  preflightContinue: false,
+  optionsSuccessStatus: 204
+};
 
-// ============================================
-// AUTRE MIDDLEWARE
-// ============================================
+// Appliquer CORS AVANT les autres middlewares
+app.use(cors(corsOptions));
+
+// Gérer les requêtes OPTIONS (preflight) pour toutes les routes
+app.options('*', cors(corsOptions));
+
+// ======================
+// MIDDLEWARE
+// ======================
 app.use(express.json());
-app.use('/public', express.static(path.join(__dirname, 'public')));
+
+// Middleware pour logger les requêtes
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url} - Origin: ${req.headers.origin || 'none'}`);
+  next();
+});
 
 // Middleware d'authentification
 const authenticateToken = (req, res, next) => {
@@ -69,21 +79,28 @@ const authenticateToken = (req, res, next) => {
   const token = authHeader && authHeader.split(' ')[1];
 
   if (!token) {
-    return res.status(401).json({ message: 'Token manquant' });
+    return res.status(401).json({ 
+      success: false,
+      message: 'Token manquant' 
+    });
   }
 
   jwt.verify(token, JWT_SECRET, (err, user) => {
     if (err) {
-      return res.status(403).json({ message: 'Token invalide' });
+      console.log('Token verification failed:', err.message);
+      return res.status(403).json({ 
+        success: false,
+        message: 'Token invalide ou expiré' 
+      });
     }
     req.user = user;
     next();
   });
 };
 
-// ============================================
-// DONNÉES EN MÉMOIRE POUR DÉVELOPPEMENT
-// ============================================
+// ======================
+// DONNÉES (pour développement)
+// ======================
 let users = [
   {
     id: '1',
@@ -95,8 +112,7 @@ let users = [
     familyRole: 'STRUCTURE',
     title: 'Fondateur & Structure',
     phone: '+261 34 43 593 30',
-    hashedPassword: bcrypt.hashSync('ByGagoos2025!', 10),
-    canChangePassword: true,
+    password: bcrypt.hashSync('ByGagoos2025!', 10),
     createdAt: new Date('2025-01-01')
   },
   {
@@ -109,8 +125,7 @@ let users = [
     familyRole: 'INSPIRATION',
     title: 'Direction Générale - Inspiration & Créativité',
     phone: '+261 3X XXX XXXX',
-    hashedPassword: bcrypt.hashSync('ByGagoos2025!', 10),
-    canChangePassword: true,
+    password: bcrypt.hashSync('ByGagoos2025!', 10),
     createdAt: new Date('2025-01-01')
   },
   {
@@ -123,8 +138,7 @@ let users = [
     familyRole: 'CREATION',
     title: 'Direction des Opérations - Création & Design',
     phone: '+261 3X XXX XXXX',
-    hashedPassword: bcrypt.hashSync('ByGagoos2025!', 10),
-    canChangePassword: true,
+    password: bcrypt.hashSync('ByGagoos2025!', 10),
     createdAt: new Date('2025-01-01')
   },
   {
@@ -137,56 +151,101 @@ let users = [
     familyRole: 'COMMUNICATION',
     title: 'Direction Administrative - Communication & Relations',
     phone: '+261 3X XXX XXXX',
-    hashedPassword: bcrypt.hashSync('ByGagoos2025!', 10),
-    canChangePassword: true,
+    password: bcrypt.hashSync('ByGagoos2025!', 10),
     createdAt: new Date('2025-01-01')
   }
 ];
 
-// ============================================
-// ROUTES
-// ============================================
+// =========== ROUTES ===========
 
-// GET /api/health
-app.get('/api/health', (req, res) => {
+// GET / - Root endpoint
+app.get('/', (req, res) => {
   res.json({
-    status: 'OK',
+    message: '��� ByGagoos-Ink API',
+    version: '1.0.0',
+    environment: process.env.NODE_ENV,
     timestamp: new Date().toISOString(),
-    service: 'ByGagoos-Ink API',
-    version: '1.0.0 (Dev)',
-    users: users.length
+    cors: {
+      enabled: true,
+      allowedOrigins: allowedOrigins
+    },
+    endpoints: {
+      health: '/api/health',
+      login: '/api/auth/login',
+      family: '/api/family/members',
+      dashboard: '/api/dashboard/stats',
+      orders: '/api/orders',
+      docs: 'https://github.com/LeMizoo/bygagoos-ink'
+    }
   });
 });
 
-// POST /api/auth/login
+// GET /api/health - Health check
+app.get('/api/health', (req, res) => {
+  res.json({
+    success: true,
+    status: 'OK',
+    service: 'ByGagoos-Ink API',
+    version: '1.0.0',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    uptime: process.uptime(),
+    cors: {
+      enabled: true,
+      allowedOrigins: allowedOrigins,
+      requestOrigin: req.headers.origin || 'none'
+    },
+    headers: {
+      origin: req.headers.origin,
+      'access-control-allow-origin': req.headers.origin && allowedOrigins.some(o => o.includes(req.headers.origin)) ? req.headers.origin : 'not-allowed'
+    }
+  });
+});
+
+// POST /api/auth/login - Login endpoint
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ message: 'Email et mot de passe requis' });
+      return res.status(400).json({ 
+        success: false,
+        message: 'Email et mot de passe requis' 
+      });
     }
 
-    // Chercher l'utilisateur
+    // Find user
     const user = users.find(u => u.email === email);
     if (!user) {
-      return res.status(401).json({ message: 'Identifiants incorrects' });
+      return res.status(401).json({ 
+        success: false,
+        message: 'Identifiants incorrects' 
+      });
     }
 
-    // Vérifier le mot de passe
-    const passwordValid = await bcrypt.compare(password, user.hashedPassword);
+    // Verify password
+    const passwordValid = await bcrypt.compare(password, user.password);
     if (!passwordValid) {
-      return res.status(401).json({ message: 'Identifiants incorrects' });
+      return res.status(401).json({ 
+        success: false,
+        message: 'Identifiants incorrects' 
+      });
     }
 
-    // Créer le token JWT
+    // Create JWT token
     const token = jwt.sign(
-      { userId: user.id, email: user.email, role: user.role },
+      { 
+        userId: user.id, 
+        email: user.email, 
+        role: user.role,
+        familyRole: user.familyRole 
+      },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
 
     res.json({
+      success: true,
       token,
       user: {
         id: user.id,
@@ -199,13 +258,17 @@ app.post('/api/auth/login', async (req, res) => {
       },
       message: 'Connexion réussie'
     });
+
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ message: 'Erreur serveur' });
+    res.status(500).json({ 
+      success: false,
+      message: 'Erreur serveur' 
+    });
   }
 });
 
-// GET /api/auth/verify
+// GET /api/auth/verify - Verify token
 app.get('/api/auth/verify', authenticateToken, (req, res) => {
   res.json({
     valid: true,
@@ -213,360 +276,205 @@ app.get('/api/auth/verify', authenticateToken, (req, res) => {
   });
 });
 
-// GET /api/family/members
+// GET /api/family/members - Get all family members
 app.get('/api/family/members', (req, res) => {
-  res.json(users.map(u => ({
-    id: u.id,
-    name: u.name,
-    email: u.email,
-    role: u.role,
-    familyRole: u.familyRole,
-    title: u.title,
-    phone: u.phone
-  })));
-});
-
-// GET /api/users/:id/profile
-app.get('/api/users/:id/profile', authenticateToken, (req, res) => {
-  const user = users.find(u => u.id === req.params.id);
-  
-  if (!user) {
-    return res.status(404).json({ message: 'Utilisateur non trouvé' });
-  }
-
-  // Vérifier que l'utilisateur ne peut voir que son propre profil
-  if (req.user.userId !== req.params.id && req.user.role !== 'SUPER_ADMIN') {
-    return res.status(403).json({ message: 'Accès refusé' });
-  }
+  const members = users.map(user => {
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      familyRole: user.familyRole,
+      title: user.title,
+      phone: user.phone,
+      color: user.familyRole === 'STRUCTURE' ? '#2E7D32' : 
+             user.familyRole === 'INSPIRATION' ? '#9C27B0' : 
+             user.familyRole === 'CREATION' ? '#FF9800' : '#2196F3',
+      emoji: user.familyRole === 'STRUCTURE' ? '���' : 
+             user.familyRole === 'INSPIRATION' ? '���' : 
+             user.familyRole === 'CREATION' ? '���' : '���'
+    };
+  });
 
   res.json({
-    id: user.id,
-    email: user.email,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    name: user.name,
-    role: user.role,
-    familyRole: user.familyRole,
-    title: user.title,
-    phone: user.phone,
-    canChangePassword: user.canChangePassword,
-    createdAt: user.createdAt
+    success: true,
+    count: members.length,
+    members
   });
 });
 
-// PUT /api/users/:id/profile - Mettre à jour le profil
-app.put('/api/users/:id/profile', authenticateToken, (req, res) => {
-  const { firstName, lastName, phone, title } = req.body;
-
-  // Vérifier que l'utilisateur ne peut modifier que son propre profil
-  if (req.user.userId !== req.params.id && req.user.role !== 'SUPER_ADMIN') {
-    return res.status(403).json({ message: 'Accès refusé' });
-  }
-
-  const user = users.find(u => u.id === req.params.id);
-  if (!user) {
-    return res.status(404).json({ message: 'Utilisateur non trouvé' });
-  }
-
-  // Mettre à jour les champs
-  if (firstName) user.firstName = firstName;
-  if (lastName) user.lastName = lastName;
-  if (phone) user.phone = phone;
-  if (title) user.title = title;
-
-  // Mettre à jour le name complet
-  user.name = `${user.firstName} ${user.lastName}`;
-
-  res.json({
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    role: user.role,
-    familyRole: user.familyRole,
-    title: user.title,
-    phone: user.phone,
-    message: 'Profil mis à jour avec succès'
-  });
-});
-
-// POST /api/users/:id/change-password - Changer le mot de passe
-app.post('/api/users/:id/change-password', authenticateToken, async (req, res) => {
+// GET /api/dashboard/stats - Dashboard statistics
+app.get('/api/dashboard/stats', authenticateToken, (req, res) => {
   try {
-    const { currentPassword, newPassword } = req.body;
-
-    // Vérifier que l'utilisateur ne peut modifier que son propre mot de passe
-    if (req.user.userId !== req.params.id) {
-      return res.status(403).json({ message: 'Accès refusé' });
-    }
-
-    if (!currentPassword || !newPassword) {
-      return res.status(400).json({ message: 'Mot de passe actuel et nouveau requis' });
-    }
-
-    if (newPassword.length < 8) {
-      return res.status(400).json({ message: 'Le nouveau mot de passe doit contenir au moins 8 caractères' });
-    }
-
-    const user = users.find(u => u.id === req.params.id);
-    if (!user) {
-      return res.status(404).json({ message: 'Utilisateur non trouvé' });
-    }
-
-    // Vérifier le mot de passe actuel
-    const passwordValid = await bcrypt.compare(currentPassword, user.hashedPassword);
-    if (!passwordValid) {
-      return res.status(401).json({ message: 'Mot de passe actuel incorrect' });
-    }
-
-    // Hasher le nouveau mot de passe et le mettre à jour
-    user.hashedPassword = await bcrypt.hash(newPassword, 10);
-
+    const stats = {
+      totalMembers: users.length,
+      totalClients: 12,
+      totalOrders: 24,
+      activeProjects: 3,
+      upcomingEvents: 2,
+      totalDocuments: 15,
+      completionRate: 75,
+      revenue: 1250000
+    };
+    
     res.json({
-      message: 'Mot de passe changé avec succès'
+      success: true,
+      stats
     });
   } catch (error) {
-    console.error('Change password error:', error);
-    res.status(500).json({ message: 'Erreur serveur' });
+    console.error('Stats error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Erreur serveur' 
+    });
   }
 });
 
-// --- Clients et Commandes (Orders) ---
-// Données en mémoire pour développement
-let clients = [
-  { id: 'c1', name: 'Manjaka', phone: '+261 34 00 000 01', email: 'manjaka@example.com' },
-  { id: 'c2', name: 'Dimby', phone: '+261 34 00 000 02', email: 'dimby@example.com' },
-  { id: 'c3', name: 'Tito', phone: '+261 34 00 000 03', email: 'tito@example.com' }
-];
-
-let orders = []; // structure defined below
-
-// Helper to generate simple ids
-const generateId = (prefix = 'id') => `${prefix}_${Math.random().toString(36).slice(2, 9)}`;
-
-// GET /api/clients
-app.get('/api/clients', authenticateToken, (req, res) => {
-  res.json(clients);
-});
-
-// POST /api/clients
-app.post('/api/clients', authenticateToken, (req, res) => {
-  const { name, phone, email } = req.body;
-  if (!name) return res.status(400).json({ message: 'Name required' });
-  const client = { id: generateId('c'), name, phone: phone || '', email: email || '' };
-  clients.push(client);
-  res.status(201).json(client);
-});
-
-// GET /api/clients/:id
-app.get('/api/clients/:id', authenticateToken, (req, res) => {
-  const client = clients.find(c => c.id === req.params.id);
-  if (!client) return res.status(404).json({ message: 'Client introuvable' });
-  res.json(client);
-});
-
-// PUT /api/clients/:id - mettre à jour un client
-app.put('/api/clients/:id', authenticateToken, (req, res) => {
-  const client = clients.find(c => c.id === req.params.id);
-  if (!client) return res.status(404).json({ message: 'Client introuvable' });
-  const { name, phone, email } = req.body;
-  if (name !== undefined) client.name = name;
-  if (phone !== undefined) client.phone = phone;
-  if (email !== undefined) client.email = email;
-  res.json(client);
-});
-
-// GET /api/orders  (supports filters: clientId, status, sortBy, sortOrder, page, limit)
+// GET /api/orders - Get recent orders
 app.get('/api/orders', authenticateToken, (req, res) => {
   try {
-    let results = [...orders];
-
-    const { clientId, status, sortBy, sortOrder = 'desc', page = 1, limit = 50 } = req.query;
-    if (clientId) results = results.filter(o => o.clientId === clientId);
-    if (status) results = results.filter(o => o.status === status);
-
-    if (sortBy) {
-      results.sort((a, b) => {
-        const dir = sortOrder === 'asc' ? 1 : -1;
-        if (sortBy === 'orderDate' || sortBy === 'deliveryDate') {
-          return (new Date(a[sortBy]) - new Date(b[sortBy])) * dir;
-        }
-        if (sortBy === 'totalPrice') {
-          return (a.totalPrice - b.totalPrice) * dir;
-        }
-        return 0;
-      });
-    }
-
-    // Pagination
-    const p = Math.max(parseInt(page, 10), 1);
-    const l = Math.max(parseInt(limit, 10), 1);
-    const start = (p - 1) * l;
-    const paged = results.slice(start, start + l);
-
-    res.json({ total: results.length, page: p, limit: l, data: paged });
-  } catch (err) {
-    console.error('GET /api/orders error', err);
-    res.status(500).json({ message: 'Erreur serveur' });
-  }
-});
-
-// POST /api/orders
-app.post('/api/orders', authenticateToken, (req, res) => {
-  try {
-    const {
-      clientId,
-      deliveryDate,
-      sizes = {},
-      color = '',
-      serigraphyImage = '',
-      unitPrice = 0,
-      notes = ''
-    } = req.body;
-
-    const client = clients.find(c => c.id === clientId);
-    if (!client) return res.status(400).json({ message: 'Client invalide' });
-
-    // sizes expected as object: { '4': 1, '6': 0, 'S': 2, ... }
-    const availableSizes = ['4','6','8','10','S','M','L','XL','XXL'];
-    let totalQty = 0;
-    const quantities = {};
-    availableSizes.forEach(s => {
-      const q = parseInt(sizes[s] || 0, 10) || 0;
-      quantities[s] = q;
-      totalQty += q;
+    const limit = parseInt(req.query.limit) || 5;
+    
+    // Données fictives pour le développement
+    const orders = [
+      {
+        id: 'CMD-001',
+        clientName: 'Client Entreprise A',
+        orderDate: new Date(),
+        totalQty: 10,
+        unitPrice: 5000,
+        totalPrice: 50000,
+        status: 'En cours'
+      },
+      {
+        id: 'CMD-002',
+        clientName: 'Client Startup B',
+        orderDate: new Date(Date.now() - 86400000),
+        totalQty: 5,
+        unitPrice: 8000,
+        totalPrice: 40000,
+        status: 'Terminé'
+      },
+      {
+        id: 'CMD-003',
+        clientName: 'Client Corporation C',
+        orderDate: new Date(Date.now() - 172800000),
+        totalQty: 8,
+        unitPrice: 6500,
+        totalPrice: 52000,
+        status: 'En cours'
+      },
+      {
+        id: 'CMD-004',
+        clientName: 'Client Association D',
+        orderDate: new Date(Date.now() - 259200000),
+        totalQty: 15,
+        unitPrice: 3000,
+        totalPrice: 45000,
+        status: 'Terminé'
+      },
+      {
+        id: 'CMD-005',
+        clientName: 'Client Indépendant E',
+        orderDate: new Date(Date.now() - 345600000),
+        totalQty: 3,
+        unitPrice: 12000,
+        totalPrice: 36000,
+        status: 'En attente'
+      }
+    ].slice(0, limit);
+    
+    res.json({
+      success: true,
+      count: orders.length,
+      orders
     });
-
-    const orderDate = new Date();
-    const delivery = deliveryDate ? new Date(deliveryDate) : null;
-    const unitPriceNum = Number(unitPrice) || 0;
-    const totalPrice = Math.round(totalQty * unitPriceNum);
-
-    // Format sizes with quantities for display
-    const sizesSummary = Object.entries(quantities)
-      .filter(([_, qty]) => qty > 0)
-      .map(([size, qty]) => `${size}: ${qty}`)
-      .join(', ') || 'Aucune taille';
-
-    const order = {
-      id: generateId('o'),
-      clientId,
-      clientName: client.name,
-      orderDate: orderDate.toISOString(),
-      orderDateFormatted: orderDate.toLocaleString('fr-MG', { 
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-      }),
-      deliveryDate: delivery ? delivery.toISOString() : null,
-      deliveryDateFormatted: delivery ? delivery.toLocaleDateString('fr-MG', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      }) : 'Non spécifiée',
-      sizes: quantities,
-      sizesSummary,
-      totalQty,
-      color,
-      serigraphyImage,
-      unitPrice: unitPriceNum,
-      totalPrice,
-      notes,
-      status: 'PENDING',
-      createdBy: req.user.userId
-    };
-
-    orders.push(order);
-    res.status(201).json(order);
-  } catch (err) {
-    console.error('POST /api/orders error', err);
-    res.status(500).json({ message: 'Erreur serveur' });
+  } catch (error) {
+    console.error('Orders error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Erreur serveur' 
+    });
   }
 });
 
-// GET /api/orders/:id
-app.get('/api/orders/:id', authenticateToken, (req, res) => {
-  const order = orders.find(o => o.id === req.params.id);
-  if (!order) return res.status(404).json({ message: 'Commande introuvable' });
-  res.json(order);
+// ======================
+// GESTION DES ERREURS
+// ======================
+
+// 404 - Route non trouvée
+app.use('*', (req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'Route non trouvée',
+    path: req.originalUrl,
+    method: req.method,
+    timestamp: new Date().toISOString()
+  });
 });
 
-// PUT /api/orders/:id - mettre à jour (status, deliveryDate, sizes, unitPrice)
-app.put('/api/orders/:id', authenticateToken, (req, res) => {
-  try {
-    const order = orders.find(o => o.id === req.params.id);
-    if (!order) return res.status(404).json({ message: 'Commande introuvable' });
-
-    const { status, deliveryDate, sizes = null, unitPrice = null, notes } = req.body;
-    if (status) order.status = status;
-    if (deliveryDate) order.deliveryDate = new Date(deliveryDate).toISOString();
-    if (notes !== undefined) order.notes = notes;
-    if (unitPrice !== null) {
-      order.unitPrice = Number(unitPrice) || 0;
-    }
-    if (sizes) {
-      let totalQty = 0;
-      Object.keys(order.sizes).forEach(s => {
-        const q = parseInt(sizes[s] || 0, 10) || 0;
-        order.sizes[s] = q;
-        totalQty += q;
-      });
-      order.totalQty = totalQty;
-    }
-    // Recompute total price
-    order.totalPrice = Math.round(order.totalQty * (Number(order.unitPrice) || 0));
-
-    res.json(order);
-  } catch (err) {
-    console.error('PUT /api/orders error', err);
-    res.status(500).json({ message: 'Erreur serveur' });
+// Error handler global
+app.use((err, req, res, next) => {
+  console.error('��� Server error:', {
+    message: err.message,
+    stack: err.stack,
+    url: req.url,
+    method: req.method,
+    origin: req.headers.origin
+  });
+  
+  // Erreur CORS spécifique
+  if (err.message === 'Not allowed by CORS') {
+    return res.status(403).json({
+      success: false,
+      message: 'Accès interdit par la politique CORS',
+      allowedOrigins: allowedOrigins,
+      yourOrigin: req.headers.origin || 'non spécifiée',
+      timestamp: new Date().toISOString()
+    });
   }
-});
-
-// --- Fin Clients & Orders ---
-
-// GET /api/calendar/events
-app.get('/api/calendar/events', (req, res) => {
-  res.json([
-    {
-      id: 1,
-      title: 'Réunion Familiale',
-      start: new Date(2025, 11, 15, 10, 0),
-      end: new Date(2025, 11, 15, 12, 0),
-      type: 'family'
-    }
-  ]);
-});
-
-// GET /api/dashboard/stats
-app.get('/api/dashboard/stats', authenticateToken, (req, res) => {
-  res.json({
-    totalMembers: users.length,
-    activeProjects: 5,
-    upcomingEvents: 3,
-    totalDocuments: 12,
-    completionRate: 75,
-    revenue: 45000,
-    totalClients: clients.length,
-    totalOrders: orders.length
+  
+  // Erreur JWT
+  if (err.name === 'JsonWebTokenError') {
+    return res.status(401).json({
+      success: false,
+      message: 'Token d\'authentification invalide'
+    });
+  }
+  
+  // Erreur générale
+  res.status(500).json({
+    success: false,
+    message: 'Erreur interne du serveur',
+    error: process.env.NODE_ENV === 'development' ? err.message : undefined,
+    timestamp: new Date().toISOString()
   });
 });
 
-// Démarrer le serveur
-app.listen(PORT, () => {
-  console.log(`\n✅ ByGagoos-Ink Backend démarré!`);
-  console.log(`🚀 URL: http://localhost:${PORT}`);
-  console.log(`📊 Health: http://localhost:${PORT}/api/health`);
-  console.log(`\n👥 4 utilisateurs configurés:`);
-  users.forEach((u, i) => {
-    console.log(`   ${i + 1}. ${u.name} (${u.title})`);
+// ======================
+// DÉMARRAGE SERVEUR
+// ======================
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    console.log(`
+╔══════════════════════════════════════════════════════════════════╗
+║                    BYGAGOOS INK API SERVER                       ║
+║                     Version: 1.0.0                               ║
+║                     Env: ${process.env.NODE_ENV || 'development'}                     ║
+║                     Port: ${PORT}                                    ║
+╚══════════════════════════════════════════════════════════════════╝
+    `);
+    console.log(`��� Serveur démarré sur le port ${PORT}`);
+    console.log(`��� URL: http://localhost:${PORT}`);
+    console.log(`��� API Health: http://localhost:${PORT}/api/health`);
+    console.log(`��� CORS configuré pour:`);
+    allowedOrigins.forEach(origin => console.log(`   • ${origin}`));
+    console.log(`\n��� ${users.length} utilisateurs configurés`);
+    console.log(`��� Mot de passe par défaut: ByGagoos2025!`);
+    console.log(`\n��� Dashboard: http://localhost:${PORT}/api/dashboard/stats`);
+    console.log(`��� Orders: http://localhost:${PORT}/api/orders?limit=5`);
+    console.log(`\n⚡ Prêt pour Vercel: https://bygagoos-api.vercel.app`);
   });
-  console.log(`\n🔑 Mot de passe temporaire pour tous: ByGagoos2025!\n`);
-});
+}
 
-process.on('SIGINT', () => {
-  console.log('\n👋 Serveur arrêté');
-  process.exit(0);
-});
+module.exports = app;
