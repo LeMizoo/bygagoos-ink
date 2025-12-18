@@ -1,113 +1,130 @@
-import React, { useEffect, useState } from 'react';
-import {
-  Box,
-  Typography,
-  Paper,
+import React from 'react';
+import { 
+  Container, 
+  Typography, 
+  Box, 
+  Paper, 
+  Button,
   Table,
+  TableBody,
+  TableCell,
+  TableContainer,
   TableHead,
   TableRow,
-  TableCell,
-  TableBody,
-  Button,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Stack
+  Chip,
+  IconButton
 } from '@mui/material';
-import api from '../services/api';
-import OrderForm from '../components/orders/OrderForm';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 
 const OrdersPage = () => {
-  const [orders, setOrders] = useState([]);
-  const [clients, setClients] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [filterClient, setFilterClient] = useState('');
-  const [openForm, setOpenForm] = useState(false);
+  const orders = [
+    { id: 'CMD-2025-001', client: 'Hotel Antananarivo', date: '10/12/2025', total: 450000, status: 'En cours', items: 50 },
+    { id: 'CMD-2025-002', client: 'Restaurant La Varangue', date: '08/12/2025', total: 280000, status: 'Terminé', items: 30 },
+    { id: 'CMD-2025-003', client: 'Université d\'Antananarivo', date: '05/12/2025', total: 1200000, status: 'En cours', items: 200 },
+    { id: 'CMD-2025-004', client: 'Boutique Artisanale', date: '01/12/2025', total: 185000, status: 'Livré', items: 25 },
+    { id: 'CMD-2025-005', client: 'École Primaire', date: '28/11/2025', total: 320000, status: 'Terminé', items: 80 },
+  ];
 
-  const fetchClients = async () => {
-    try {
-      const res = await api.get('/api/clients');
-      setClients(res.data || []);
-    } catch (err) { console.error(err); }
-  };
-
-  const fetchOrders = async () => {
-    try {
-      setLoading(true);
-      const q = filterClient ? `?clientId=${filterClient}` : '';
-      const res = await api.get('/api/orders' + q);
-      setOrders(res.data?.data || []);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
+  const getStatusColor = (status) => {
+    switch(status) {
+      case 'Terminé': return 'success';
+      case 'En cours': return 'warning';
+      case 'Livré': return 'info';
+      default: return 'default';
     }
   };
 
-  useEffect(() => { fetchClients(); fetchOrders(); }, [filterClient]);
-
-  const handleCreated = (order) => {
-    setOrders(prev => [order, ...prev]);
-  };
-
   return (
-    <Box p={3}>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-        <Typography variant="h4">Commandes</Typography>
-        <Button variant="contained" onClick={() => setOpenForm(true)}>Nouvelle commande</Button>
-      </Stack>
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <ShoppingCartIcon sx={{ fontSize: 40, color: '#2E7D32' }} />
+            <Box>
+              <Typography variant="h4" component="h1" sx={{ color: '#2E7D32', fontWeight: 600 }}>
+                🛒 Commandes
+              </Typography>
+              <Typography variant="body1" color="text.secondary">
+                Gérez les commandes de vos clients
+              </Typography>
+            </Box>
+          </Box>
+          <Button 
+            variant="contained" 
+            color="primary"
+            onClick={() => alert('Nouvelle commande')}
+          >
+            + Nouvelle commande
+          </Button>
+        </Box>
 
-      <Paper sx={{ p: 2, mb: 2 }}>
-        <FormControl sx={{ minWidth: 240 }}>
-          <InputLabel>Filtrer par client</InputLabel>
-          <Select value={filterClient} label="Filtrer par client" onChange={e => setFilterClient(e.target.value)}>
-            <MenuItem value="">Tous</MenuItem>
-            {clients.map(c => (
-              <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Paper>
-
-      <Paper>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Réf</TableCell>
-              <TableCell>Client</TableCell>
-              <TableCell>Date commande</TableCell>
-              <TableCell>Livraison</TableCell>
-              <TableCell>Total Qty</TableCell>
-              <TableCell>Prix unitaire (MGA)</TableCell>
-              <TableCell>Total (MGA)</TableCell>
-              <TableCell>Status</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {orders.map(o => (
-              <TableRow key={o.id} hover>
-                <TableCell>{o.id}</TableCell>
-                <TableCell>{o.clientName}</TableCell>
-                <TableCell>{new Date(o.orderDate).toLocaleString()}</TableCell>
-                <TableCell>{o.deliveryDate ? new Date(o.deliveryDate).toLocaleDateString() : '-'}</TableCell>
-                <TableCell>{o.totalQty}</TableCell>
-                <TableCell>{new Intl.NumberFormat('fr-MG').format(o.unitPrice)} MGA</TableCell>
-                <TableCell>{new Intl.NumberFormat('fr-MG').format(o.totalPrice)} MGA</TableCell>
-                <TableCell>{o.status}</TableCell>
-              </TableRow>
-            ))}
-            {orders.length === 0 && !loading && (
+        <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid #e0e0e0' }}>
+          <Table>
+            <TableHead sx={{ bgcolor: '#f5f5f5' }}>
               <TableRow>
-                <TableCell colSpan={8}>Aucune commande trouvée.</TableCell>
+                <TableCell><strong>N° Commande</strong></TableCell>
+                <TableCell><strong>Client</strong></TableCell>
+                <TableCell><strong>Date</strong></TableCell>
+                <TableCell><strong>Articles</strong></TableCell>
+                <TableCell><strong>Total (MGA)</strong></TableCell>
+                <TableCell><strong>Statut</strong></TableCell>
+                <TableCell><strong>Actions</strong></TableCell>
               </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </Paper>
+            </TableHead>
+            <TableBody>
+              {orders.map((order) => (
+                <TableRow key={order.id} hover>
+                  <TableCell>{order.id}</TableCell>
+                  <TableCell>{order.client}</TableCell>
+                  <TableCell>{order.date}</TableCell>
+                  <TableCell>{order.items}</TableCell>
+                  <TableCell>
+                    <Typography fontWeight={500}>
+                      {order.total.toLocaleString('fr-MG')} MGA
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Chip 
+                      label={order.status} 
+                      color={getStatusColor(order.status)}
+                      size="small"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <IconButton size="small" title="Voir">
+                      <VisibilityIcon fontSize="small" />
+                    </IconButton>
+                    <IconButton size="small" title="Modifier">
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                    <IconButton size="small" title="Supprimer">
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
 
-      <OrderForm open={openForm} onClose={() => setOpenForm(false)} onCreated={handleCreated} />
-    </Box>
+        <Box sx={{ mt: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="body2" color="text.secondary">
+            Total: {orders.length} commandes
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button variant="outlined" onClick={() => window.print()}>
+              Imprimer la liste
+            </Button>
+            <Button variant="contained" onClick={() => alert('Export CSV')}>
+              Exporter en CSV
+            </Button>
+          </Box>
+        </Box>
+      </Paper>
+    </Container>
   );
 };
 

@@ -1,4 +1,4 @@
-// frontend/src/pages/Login.jsx
+// frontend/src/pages/Login.jsx - VERSION OPTIMISÉE
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -31,10 +31,10 @@ const Login = () => {
   const { login, loading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   
-  const [email, setEmail] = useState(IMAGES_CONFIG.familyMembers[0].email);
-  const [password, setPassword] = useState('ByGagoos2025!');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [selectedMember, setSelectedMember] = useState(IMAGES_CONFIG.familyMembers[0]);
+  const [selectedMember, setSelectedMember] = useState(null);
   const [loginError, setLoginError] = useState('');
   const [backendStatus, setBackendStatus] = useState('checking');
 
@@ -45,11 +45,19 @@ const Login = () => {
     
     // Vérifier l'état du backend
     checkBackendStatus();
+    
+    // Sélectionner le premier membre par défaut
+    if (IMAGES_CONFIG.FAMILY_MEMBERS.length > 0 && !selectedMember) {
+      const firstMember = IMAGES_CONFIG.FAMILY_MEMBERS[0];
+      setSelectedMember(firstMember);
+      setEmail(firstMember.email);
+      setPassword(firstMember.password);
+    }
   }, [isAuthenticated, navigate]);
 
   const checkBackendStatus = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/health');
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/health`);
       if (response.ok) {
         setBackendStatus('online');
       } else {
@@ -79,9 +87,15 @@ const Login = () => {
 
     const result = await login(email, password);
     
-    if (!result.success) {
-      setLoginError(result.message);
+    if (result.success) {
+      navigate('/dashboard');
+    } else {
+      setLoginError(result.error || 'Échec de la connexion');
     }
+  };
+
+  const handleBackToHome = () => {
+    navigate('/');
   };
 
   return (
@@ -97,7 +111,7 @@ const Login = () => {
         <Box sx={{ mb: 2, textAlign: 'center' }}>
           <Button
             startIcon={<ArrowBackIcon />}
-            onClick={() => navigate('/')}
+            onClick={handleBackToHome}
             sx={{
               color: 'white',
               '&:hover': {
@@ -176,7 +190,7 @@ const Login = () => {
 
                   <Alert severity="info" sx={{ mt: 2, mb: 2 }}>
                     <Typography variant="body2">
-                      <strong>Mot de passe commun :</strong> ByGagoos2025!
+                      <strong>Mot de passe commun :</strong> Anontanio Izy
                     </Typography>
                   </Alert>
 
@@ -210,21 +224,6 @@ const Login = () => {
                     État du système : {backendStatus === 'online' ? '✅ En ligne' : '❌ Hors ligne'}
                   </Typography>
                 </Divider>
-                
-                <Box sx={{ mt: 4, textAlign: 'center' }}>
-                  <Button
-                    variant="text"
-                    onClick={() => navigate('/')}
-                    sx={{ 
-                      color: 'text.secondary',
-                      '&:hover': {
-                        color: 'primary.main',
-                      }
-                    }}
-                  >
-                    ← Retour à la page d'accueil
-                  </Button>
-                </Box>
               </Paper>
             </Fade>
           </Grid>
@@ -248,7 +247,7 @@ const Login = () => {
                 </Typography>
 
                 <Grid container spacing={2}>
-                  {IMAGES_CONFIG.familyMembers.map((member) => (
+                  {IMAGES_CONFIG.FAMILY_MEMBERS.map((member) => (
                     <Grid item xs={12} key={member.id}>
                       <Card 
                         onClick={() => handleMemberClick(member)}
@@ -267,7 +266,7 @@ const Login = () => {
                         <CardContent>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                             <Avatar 
-                              src={IMAGES_CONFIG.getImageUrl(member.image)}
+                              src={IMAGES_CONFIG.getImageUrl(member.imagePath)}
                               onError={(e) => {
                                 e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=${member.color.replace('#', '')}&color=fff`;
                               }}
@@ -324,12 +323,6 @@ const Login = () => {
                     • <strong>INSPIRATION</strong> : Innovation et nouvelles idées<br />
                     • <strong>CREATION</strong> : Production et réalisation concrète<br />
                     • <strong>COMMUNICATION</strong> : Marketing et relations externes
-                  </Typography>
-                </Box>
-
-                <Box sx={{ mt: 3, textAlign: 'center' }}>
-                  <Typography variant="body2" color="text.secondary" fontStyle="italic">
-                    "Petits commencements, grandes fins." - Proverbe malgache
                   </Typography>
                 </Box>
               </Paper>

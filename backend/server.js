@@ -1,3 +1,4 @@
+// backend/server.js - SERVEUR PRINCIPAL COMPLET
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -5,7 +6,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 const app = express();
-const PORT = process.env.PORT || 3002;
+const PORT = process.env.PORT || 3001; // CHANGÉ DE 3002 À 3001
 const JWT_SECRET = process.env.JWT_SECRET || 'bygagoos-dev-secret-2025';
 
 // ======================
@@ -34,7 +35,7 @@ const corsOptions = {
     if (isAllowed) {
       callback(null, true);
     } else {
-      console.log('��� CORS blocked for origin:', origin);
+      console.log('🚫 CORS blocked for origin:', origin);
       console.log('✅ Allowed origins:', allowedOrigins);
       callback(new Error('Not allowed by CORS'));
     }
@@ -121,10 +122,10 @@ let users = [
     firstName: 'Volatiana',
     lastName: 'RANDRIANARISOA',
     name: 'Volatiana RANDRIANARISOA',
-    role: 'FAMILY_MEMBER',
-    familyRole: 'INSPIRATION',
-    title: 'Direction Générale - Inspiration & Créativité',
-    phone: '+261 3X XXX XXXX',
+    role: 'ADMIN',
+    familyRole: 'INSPIRATION_CREATIVITY',
+    title: 'Inspiration & Créativité',
+    phone: '+261 34 43 359 30',
     password: bcrypt.hashSync('ByGagoos2025!', 10),
     createdAt: new Date('2025-01-01')
   },
@@ -134,10 +135,10 @@ let users = [
     firstName: 'Miantsatiana',
     lastName: 'RAHENDRISON',
     name: 'Miantsatiana RAHENDRISON',
-    role: 'FAMILY_MEMBER',
-    familyRole: 'CREATION',
-    title: 'Direction des Opérations - Création & Design',
-    phone: '+261 3X XXX XXXX',
+    role: 'ADMIN',
+    familyRole: 'OPERATIONS_DESIGN',
+    title: 'Opérations & Design',
+    phone: '+261 34 75 301 07',
     password: bcrypt.hashSync('ByGagoos2025!', 10),
     createdAt: new Date('2025-01-01')
   },
@@ -147,21 +148,46 @@ let users = [
     firstName: 'Tia Faniry',
     lastName: 'RAHENDRISON',
     name: 'Tia Faniry RAHENDRISON',
-    role: 'FAMILY_MEMBER',
-    familyRole: 'COMMUNICATION',
-    title: 'Direction Administrative - Communication & Relations',
-    phone: '+261 3X XXX XXXX',
+    role: 'ADMIN',
+    familyRole: 'ADMIN_COMMUNICATION',
+    title: 'Admin & Communication',
+    phone: '+261 38 44 993 77',
     password: bcrypt.hashSync('ByGagoos2025!', 10),
     createdAt: new Date('2025-01-01')
   }
 ];
+
+// SERVIR LES FICHIERS STATIQUES
+// ======================
+const path = require('path');
+
+// Servir les fichiers statiques du dossier public
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Routes spécifiques pour les dossiers
+app.use('/profiles', express.static(path.join(__dirname, 'public/profiles')));
+app.use('/production', express.static(path.join(__dirname, 'public/production')));
+app.use('/images', express.static(path.join(__dirname, 'public/images')));
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
+
+// Route pour vérifier les fichiers statiques
+app.get('/api/public/*', (req, res) => {
+  const filePath = req.params[0];
+  console.log(`📁 Static file requested: ${filePath}`);
+  res.sendFile(path.join(__dirname, 'public', filePath), (err) => {
+    if (err) {
+      console.log(`❌ Static file not found: ${filePath}`);
+      res.status(404).json({ error: 'File not found', path: filePath });
+    }
+  });
+});
 
 // =========== ROUTES ===========
 
 // GET / - Root endpoint
 app.get('/', (req, res) => {
   res.json({
-    message: '��� ByGagoos-Ink API',
+    message: '🎨 ByGagoos Ink API - Sérigraphie Textile',
     version: '1.0.0',
     environment: process.env.NODE_ENV,
     timestamp: new Date().toISOString(),
@@ -170,11 +196,14 @@ app.get('/', (req, res) => {
       allowedOrigins: allowedOrigins
     },
     endpoints: {
-      health: '/api/health',
-      login: '/api/auth/login',
-      family: '/api/family/members',
-      dashboard: '/api/dashboard/stats',
-      orders: '/api/orders',
+      root: 'GET /',
+      health: 'GET /api/health',
+      login: 'POST /api/auth/login',
+      verify: 'GET /api/auth/verify',
+      family: 'GET /api/family',
+      familyMembers: 'GET /api/family/members',
+      dashboard: 'GET /api/dashboard/stats',
+      orders: 'GET /api/orders',
       docs: 'https://github.com/LeMizoo/bygagoos-ink'
     }
   });
@@ -250,6 +279,8 @@ app.post('/api/auth/login', async (req, res) => {
       user: {
         id: user.id,
         name: user.name,
+        firstName: user.firstName,
+        lastName: user.lastName,
         email: user.email,
         role: user.role,
         familyRole: user.familyRole,
@@ -276,7 +307,33 @@ app.get('/api/auth/verify', authenticateToken, (req, res) => {
   });
 });
 
-// GET /api/family/members - Get all family members
+// GET /api/family - Get all family members (compatible avec app.js)
+app.get('/api/family', (req, res) => {
+  try {
+    const members = users.map(user => {
+      return {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phone: user.phone,
+        role: user.role,
+        familyRole: user.familyRole,
+        createdAt: user.createdAt
+      };
+    });
+
+    res.json(members);
+  } catch (error) {
+    console.error('Error fetching family:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Erreur serveur' 
+    });
+  }
+});
+
+// GET /api/family/members - Get all family members (format enrichi)
 app.get('/api/family/members', (req, res) => {
   const members = users.map(user => {
     return {
@@ -288,11 +345,11 @@ app.get('/api/family/members', (req, res) => {
       title: user.title,
       phone: user.phone,
       color: user.familyRole === 'STRUCTURE' ? '#2E7D32' : 
-             user.familyRole === 'INSPIRATION' ? '#9C27B0' : 
-             user.familyRole === 'CREATION' ? '#FF9800' : '#2196F3',
-      emoji: user.familyRole === 'STRUCTURE' ? '���' : 
-             user.familyRole === 'INSPIRATION' ? '���' : 
-             user.familyRole === 'CREATION' ? '���' : '���'
+             user.familyRole === 'INSPIRATION_CREATIVITY' ? '#9C27B0' : 
+             user.familyRole === 'OPERATIONS_DESIGN' ? '#FF9800' : '#2196F3',
+      emoji: user.familyRole === 'STRUCTURE' ? '🏗️' : 
+             user.familyRole === 'INSPIRATION_CREATIVITY' ? '✨' : 
+             user.familyRole === 'OPERATIONS_DESIGN' ? '🎨' : '📞'
     };
   });
 
@@ -409,13 +466,23 @@ app.use('*', (req, res) => {
     message: 'Route non trouvée',
     path: req.originalUrl,
     method: req.method,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    availableRoutes: {
+      root: 'GET /',
+      health: 'GET /api/health',
+      login: 'POST /api/auth/login',
+      verify: 'GET /api/auth/verify',
+      family: 'GET /api/family',
+      familyMembers: 'GET /api/family/members',
+      dashboard: 'GET /api/dashboard/stats',
+      orders: 'GET /api/orders'
+    }
   });
 });
 
 // Error handler global
 app.use((err, req, res, next) => {
-  console.error('��� Server error:', {
+  console.error('🔥 Server error:', {
     message: err.message,
     stack: err.stack,
     url: req.url,
@@ -464,16 +531,17 @@ if (process.env.NODE_ENV !== 'test') {
 ║                     Port: ${PORT}                                    ║
 ╚══════════════════════════════════════════════════════════════════╝
     `);
-    console.log(`��� Serveur démarré sur le port ${PORT}`);
-    console.log(`��� URL: http://localhost:${PORT}`);
-    console.log(`��� API Health: http://localhost:${PORT}/api/health`);
-    console.log(`��� CORS configuré pour:`);
+    console.log(`✅ Serveur démarré sur http://localhost:${PORT}`);
+    console.log(`🩺 API Health: http://localhost:${PORT}/api/health`);
+    console.log(`🔐 Login: POST http://localhost:${PORT}/api/auth/login`);
+    console.log(`👨‍👩‍👧‍👦 Famille: http://localhost:${PORT}/api/family`);
+    console.log(`\n📋 ${users.length} utilisateurs configurés:`);
+    users.forEach(user => {
+      console.log(`   • ${user.email} - ${user.role} (${user.familyRole})`);
+    });
+    console.log(`\n🔑 Mot de passe par défaut: ByGagoos2025!`);
+    console.log(`\n🌐 CORS configuré pour ${allowedOrigins.length} origines`);
     allowedOrigins.forEach(origin => console.log(`   • ${origin}`));
-    console.log(`\n��� ${users.length} utilisateurs configurés`);
-    console.log(`��� Mot de passe par défaut: ByGagoos2025!`);
-    console.log(`\n��� Dashboard: http://localhost:${PORT}/api/dashboard/stats`);
-    console.log(`��� Orders: http://localhost:${PORT}/api/orders?limit=5`);
-    console.log(`\n⚡ Prêt pour Vercel: https://bygagoos-api.vercel.app`);
   });
 }
 

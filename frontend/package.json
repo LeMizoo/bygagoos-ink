@@ -4,13 +4,15 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --host",
+    "dev": "vite --host --port 5173",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview --host",
-    "start": "vite --host",
+    "preview": "vite preview --host --port 4173",
+    "start": "vite --host --port 5173",
     "cypress:open": "cypress open",
-    "cypress:run": "cypress run"
+    "cypress:run": "cypress run",
+    "dev:network": "vite --host --port 5173",
+    "deploy:vercel": "vercel --prod"
   },
   "dependencies": {
     "@emotion/react": "^11.11.4",
@@ -18,11 +20,11 @@
     "@mui/icons-material": "^5.15.19",
     "@mui/material": "^5.15.19",
     "axios": "^1.7.4",
+    "lucide-react": "^0.561.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hot-toast": "^2.4.1",
-    "react-router-dom": "^6.26.0",
-    "vercel": "^49.2.0"
+    "react-router-dom": "^6.26.0"
   },
   "devDependencies": {
     "@types/react": "^18.3.3",
@@ -50,7 +52,7 @@
   "author": "Tovoniaina RAHENDRISON",
   "license": "Private",
   "engines": {
-    "node": "18.17.0",
+    "node": ">=18.17.0",
     "npm": ">=9.0.0"
   },
   "repository": {

@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  # --- Backend API (Production) ---
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile  # Utiliser Dockerfile principal pour la production
+    container_name: bygagoos-backend-prod
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - ./backend/.env.production
+    networks:
+      - bygagoos-network-prod
+    restart: always
+    healthcheck:
+      test: ["CMD", "node", "-e", "const http = require('http'); const req = http.request({hostname:'localhost',port:3001,path:'/api/health',timeout:5000}, (res) => {if(res.statusCode===200)process.exit(0);else process.exit(1);}); req.on('error',()=>process.exit(1)); req.end();"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # --- Frontend (Production) ---
+  frontend:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: bygagoos-frontend-prod
+    ports:
+      - "5173:80"
+    environment:
+      - VITE_API_URL=http://localhost:3001
+      - NODE_ENV=production
+    depends_on:
+      - backend
+    networks:
+      - bygagoos-network-prod
+    restart: always
+
+networks:
+  bygagoos-network-prod:
+    driver: bridge

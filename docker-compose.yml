@@ -1,32 +1,46 @@
-version: '3.8'
+version: "3.8"
 
 services:
   backend:
-    build: ./backend
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile.dev
     container_name: bygagoos-backend
     ports:
-      - "5000:5000"
+      - "3001:3001"
     environment:
-      - NODE_ENV=development
-      - PORT=5000
-      - FRONTEND_URL=http://localhost:3000
+      NODE_ENV: development
+    env_file:
+      - ./backend/.env.docker
     volumes:
       - ./backend:/app
       - /app/node_modules
-      - images_volume:/app/public/images
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - bygagoos-network
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: bygagoos-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: bygagoos_ink
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     networks:
       - bygagoos-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:5000/health').catch(() => process.exit(1))"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    command: >
-      sh -c "mkdir -p /app/public/images/profiles && 
-             echo '📁 Structure des images initialisée' && 
-             node app.js"
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   frontend:
     build: 
@@ -34,43 +48,25 @@ services:
       dockerfile: Dockerfile.dev
     container_name: bygagoos-frontend
     ports:
-      - "3000:3000"
+      - "5173:5173"
     environment:
-      - VITE_API_URL=http://localhost:5000
-      - VITE_APP_VERSION=1.1.0
+      VITE_API_URL: http://localhost:3001
+      NODE_ENV: development
     volumes:
       - ./frontend:/app
       - /app/node_modules
-      - frontend_images:/app/public
     depends_on:
-      backend:
-        condition: service_healthy
+      - backend
     networks:
       - bygagoos-network
-    restart: unless-stopped
     stdin_open: true
     tty: true
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-
-volumes:
-  images_volume:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./backend/public/images
-  frontend_images:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./frontend/public
+    restart: unless-stopped
 
 networks:
   bygagoos-network:
     driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local

@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { FAMILY_MEMBERS, getImageUrl, getPlaceholderImage } from '../config/images';
 import {
   Container,
   Paper,
@@ -57,10 +58,50 @@ const FamilyPage = () => {
     setLoading(true);
     try {
       const data = await getFamilyMembers();
-      setMembers(data);
-      setFilteredMembers(data);
+      
+      if (data && data.length > 0) {
+        // Ajouter les images depuis la configuration
+        const membersWithImages = data.map(member => {
+          const memberConfig = FAMILY_MEMBERS.find(m => 
+            m.name.toLowerCase() === member.name.toLowerCase() || 
+            m.email.toLowerCase() === member.email.toLowerCase()
+          );
+          
+          return {
+            ...member,
+            profileImage: memberConfig ? getImageUrl(memberConfig.imagePath) : 
+                         `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=${getRoleColor(member.role).replace('#', '')}&color=fff`,
+            color: memberConfig?.color || getRoleColor(member.role),
+            description: memberConfig?.description || member.description || '',
+            isFallback: false
+          };
+        });
+        
+        setMembers(membersWithImages);
+        setFilteredMembers(membersWithImages);
+      } else {
+        // Fallback aux membres configurés
+        console.warn('API retourne vide, utilisation des données locales');
+        const fallbackMembers = FAMILY_MEMBERS.map(member => ({
+          ...member,
+          profileImage: getImageUrl(member.imagePath),
+          isFallback: true
+        }));
+        setMembers(fallbackMembers);
+        setFilteredMembers(fallbackMembers);
+      }
+      
     } catch (error) {
-      toast.error('Erreur lors du chargement des membres');
+      console.warn('API non disponible, utilisation des membres par défaut:', error);
+      // Fallback aux membres configurés
+      const fallbackMembers = FAMILY_MEMBERS.map(member => ({
+        ...member,
+        profileImage: getImageUrl(member.imagePath),
+        isFallback: true
+      }));
+      setMembers(fallbackMembers);
+      setFilteredMembers(fallbackMembers);
+      toast.info('Connexion au backend limitée - Affichage des membres par défaut');
     } finally {
       setLoading(false);
     }
@@ -74,9 +115,9 @@ const FamilyPage = () => {
 
     const filtered = members.filter(member =>
       member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (member.email && member.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
       member.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.description.toLowerCase().includes(searchTerm.toLowerCase())
+      (member.description && member.description.toLowerCase().includes(searchTerm.toLowerCase()))
     );
     
     setFilteredMembers(filtered);
@@ -93,17 +134,6 @@ const FamilyPage = () => {
     }
   };
 
-  const getRoleIcon = (role) => {
-    switch (role) {
-      case 'SUPER_ADMIN':
-      case 'STRUCTURE': return '👑';
-      case 'INSPIRATION': return '💡';
-      case 'CREATION': return '🎨';
-      case 'COMMUNICATION': return '📢';
-      default: return '👤';
-    }
-  };
-
   const getRoleDescription = (role) => {
     switch (role) {
       case 'STRUCTURE': return 'Responsable de la direction stratégique et des décisions clés.';
@@ -112,6 +142,14 @@ const FamilyPage = () => {
       case 'COMMUNICATION': return 'Gère les relations externes et la communication.';
       default: return 'Membre actif de l\'équipe familiale.';
     }
+  };
+
+  const handleImageError = (e, member) => {
+    console.warn('Image error for member:', member.name);
+    // Remplacer par avatar généré
+    const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=${member.color ? member.color.replace('#', '') : '2E7D32'}&color=fff`;
+    e.target.src = avatarUrl;
+    e.target.onerror = null;
   };
 
   const handleViewDetails = (member) => {
@@ -125,8 +163,12 @@ const FamilyPage = () => {
   };
 
   const handleContact = (email) => {
-    window.location.href = `mailto:${email}`;
-    toast.success(`Ouverture de l'email vers ${email}`);
+    if (email) {
+      window.location.href = `mailto:${email}`;
+      toast.success(`Ouverture de l'email vers ${email}`);
+    } else {
+      toast.error('Aucune adresse email disponible');
+    }
   };
 
   const handleTabChange = (event, newValue) => {
@@ -159,6 +201,11 @@ const FamilyPage = () => {
               <Typography variant="body1" color="text.secondary">
                 {members.length} membres • Une famille, une vision
               </Typography>
+              {members.some(m => m.isFallback) && (
+                <Typography variant="caption" color="warning.main" sx={{ display: 'block', mt: 0.5 }}>
+                  
+                </Typography>
+              )}
             </Box>
           </Box>
           
@@ -166,9 +213,10 @@ const FamilyPage = () => {
             <Button
               variant="contained"
               color="primary"
-              onClick={() => toast.info('Fonctionnalité en développement')}
+              onClick={loadMembers}
+              startIcon={<span>🔄</span>}
             >
-              👥 Réunion d'équipe
+              Actualiser
             </Button>
           </Box>
         </Box>
@@ -213,18 +261,35 @@ const FamilyPage = () => {
       <Grid container spacing={3}>
         {filteredMembers
           .filter(member => activeTab === 0 || member.role === ['STRUCTURE', 'INSPIRATION', 'CREATION', 'COMMUNICATION'][activeTab - 1])
-          .map((member) => (
-            <Grid item xs={12} sm={6} md={4} lg={3} key={member.id}>
+          .map((member, index) => (
+            <Grid item xs={12} sm={6} md={4} lg={3} key={member.id || index}>
               <Card sx={{ 
                 height: '100%',
                 position: 'relative',
-                borderLeft: `4px solid ${getRoleColor(member.role)}`,
+                borderLeft: `4px solid ${member.color || getRoleColor(member.role)}`,
                 transition: 'all 0.3s',
+                opacity: member.isFallback ? 0.9 : 1,
                 '&:hover': {
                   transform: 'translateY(-8px)',
                   boxShadow: 8,
                 }
               }}>
+                {member.isFallback && (
+                  <Chip 
+                    label="Démo"
+                    size="small"
+                    sx={{ 
+                      position: 'absolute',
+                      top: 8,
+                      right: 8,
+                      zIndex: 1,
+                      bgcolor: 'warning.light',
+                      color: 'warning.dark',
+                      fontSize: '0.6rem'
+                    }}
+                  />
+                )}
+                
                 <CardContent sx={{ textAlign: 'center', pt: 4 }}>
                   {/* Role Badge */}
                   <Box sx={{ 
@@ -237,7 +302,7 @@ const FamilyPage = () => {
                       label={member.role}
                       size="small"
                       sx={{ 
-                        bgcolor: getRoleColor(member.role),
+                        bgcolor: member.color || getRoleColor(member.role),
                         color: 'white',
                         fontWeight: 600,
                         px: 1,
@@ -245,18 +310,16 @@ const FamilyPage = () => {
                     />
                   </Box>
 
-                  {/* Avatar with real image */}
+                  {/* Avatar avec gestion d'erreur */}
                   <Avatar 
                     src={member.profileImage}
-                    onError={(e) => {
-                      e.target.src = member.image;
-                    }}
+                    onError={(e) => handleImageError(e, member)}
                     sx={{ 
                       width: 100,
                       height: 100,
                       fontSize: '2rem',
                       margin: '0 auto 16px',
-                      border: `3px solid ${getRoleColor(member.role)}`,
+                      border: `3px solid ${member.color || getRoleColor(member.role)}`,
                       objectFit: 'cover'
                     }}
                   />
@@ -264,6 +327,7 @@ const FamilyPage = () => {
                   {/* Name */}
                   <Typography variant="h6" component="div" gutterBottom sx={{ fontWeight: 600, minHeight: 60 }}>
                     {member.name}
+                    {member.isFallback && ' (Local)'}
                   </Typography>
 
                   {/* Description */}
@@ -274,17 +338,20 @@ const FamilyPage = () => {
                     WebkitBoxOrient: 'vertical',
                     overflow: 'hidden'
                   }}>
-                    {member.description}
+                    {member.description || 'Membre de l\'équipe ByGagoos-Ink'}
                   </Typography>
 
                   {/* Email */}
-                  <Typography variant="body2" sx={{ 
-                    fontStyle: 'italic',
-                    color: getRoleColor(member.role),
-                    mb: 2
-                  }}>
-                    ✉️ {member.email}
-                  </Typography>
+                  {member.email && (
+                    <Typography variant="body2" sx={{ 
+                      fontStyle: 'italic',
+                      color: member.color || getRoleColor(member.role),
+                      mb: 2,
+                      wordBreak: 'break-word'
+                    }}>
+                      ✉️ {member.email}
+                    </Typography>
+                  )}
 
                   {/* Actions */}
                   <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
@@ -295,14 +362,16 @@ const FamilyPage = () => {
                     >
                       Voir détails
                     </Button>
-                    <Button 
-                      variant="contained" 
-                      size="small"
-                      sx={{ bgcolor: getRoleColor(member.role) }}
-                      onClick={() => handleContact(member.email)}
-                    >
-                      Contacter
-                    </Button>
+                    {member.email && (
+                      <Button 
+                        variant="contained" 
+                        size="small"
+                        sx={{ bgcolor: member.color || getRoleColor(member.role) }}
+                        onClick={() => handleContact(member.email)}
+                      >
+                        Contacter
+                      </Button>
+                    )}
                   </Box>
                 </CardContent>
               </Card>
@@ -342,29 +411,30 @@ const FamilyPage = () => {
         {selectedMember && (
           <>
             <DialogTitle sx={{ 
-              borderBottom: `4px solid ${getRoleColor(selectedMember.role)}`,
+              borderBottom: `4px solid ${selectedMember.color || getRoleColor(selectedMember.role)}`,
               pb: 2
             }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Avatar 
                   src={selectedMember.profileImage}
-                  onError={(e) => {
-                    e.target.src = selectedMember.image;
-                  }}
+                  onError={(e) => handleImageError(e, selectedMember)}
                   sx={{ 
                     width: 80,
                     height: 80,
-                    border: `3px solid ${getRoleColor(selectedMember.role)}`,
+                    border: `3px solid ${selectedMember.color || getRoleColor(selectedMember.role)}`,
                     objectFit: 'cover'
                   }}
                 />
                 <Box>
-                  <Typography variant="h5">{selectedMember.name}</Typography>
+                  <Typography variant="h5">
+                    {selectedMember.name}
+                    {selectedMember.isFallback && ' (Local)'}
+                  </Typography>
                   <Chip 
                     label={selectedMember.role}
                     size="small"
                     sx={{ 
-                      bgcolor: getRoleColor(selectedMember.role),
+                      bgcolor: selectedMember.color || getRoleColor(selectedMember.role),
                       color: 'white',
                       fontWeight: 600,
                       mt: 1
@@ -383,30 +453,36 @@ const FamilyPage = () => {
                   {getRoleDescription(selectedMember.role)}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {selectedMember.description}
+                  {selectedMember.description || 'Membre actif de l\'équipe familiale.'}
                 </Typography>
 
                 <Divider sx={{ my: 3 }} />
 
-                <Typography variant="h6" gutterBottom color="primary">
-                  📞 Contact
-                </Typography>
-                <Grid container spacing={2}>
-                  <Grid item xs={12}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                      <EmailIcon color="action" />
-                      <Typography variant="body1">{selectedMember.email}</Typography>
-                    </Box>
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                      <WorkIcon color="action" />
-                      <Typography variant="body1">Rôle : {selectedMember.role}</Typography>
-                    </Box>
-                  </Grid>
-                </Grid>
+                {selectedMember.email && (
+                  <>
+                    <Typography variant="h6" gutterBottom color="primary">
+                      📞 Contact
+                    </Typography>
+                    <Grid container spacing={2}>
+                      <Grid item xs={12}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                          <EmailIcon color="action" />
+                          <Typography variant="body1" sx={{ wordBreak: 'break-word' }}>
+                            {selectedMember.email}
+                          </Typography>
+                        </Box>
+                      </Grid>
+                      <Grid item xs={12}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                          <WorkIcon color="action" />
+                          <Typography variant="body1">Rôle : {selectedMember.role}</Typography>
+                        </Box>
+                      </Grid>
+                    </Grid>
 
-                <Divider sx={{ my: 3 }} />
+                    <Divider sx={{ my: 3 }} />
+                  </>
+                )}
 
                 <Typography variant="h6" gutterBottom color="primary">
                   🎯 Responsabilités
@@ -444,6 +520,9 @@ const FamilyPage = () => {
                       <li><Typography variant="body2">Organisation d'événements</Typography></li>
                     </>
                   )}
+                  {!['STRUCTURE', 'INSPIRATION', 'CREATION', 'COMMUNICATION'].includes(selectedMember.role) && (
+                    <li><Typography variant="body2">Participation aux projets d'entreprise</Typography></li>
+                  )}
                 </ul>
               </Box>
             </DialogContent>
@@ -452,14 +531,16 @@ const FamilyPage = () => {
               <Button onClick={handleCloseDialog}>
                 Fermer
               </Button>
-              <Button 
-                variant="contained" 
-                sx={{ bgcolor: getRoleColor(selectedMember.role) }}
-                onClick={() => handleContact(selectedMember.email)}
-                startIcon={<EmailIcon />}
-              >
-                Envoyer un email
-              </Button>
+              {selectedMember.email && (
+                <Button 
+                  variant="contained" 
+                  sx={{ bgcolor: selectedMember.color || getRoleColor(selectedMember.role) }}
+                  onClick={() => handleContact(selectedMember.email)}
+                  startIcon={<EmailIcon />}
+                >
+                  Envoyer un email
+                </Button>
+              )}
             </DialogActions>
           </>
         )}
@@ -472,6 +553,7 @@ const FamilyPage = () => {
         </Typography>
         <Typography variant="caption" color="text.secondary" align="center" sx={{ display: 'block', mt: 1 }}>
           "L'union fait la force" • {members.length} membres • Dernière mise à jour : aujourd'hui
+          {members.some(m => m.isFallback) && ' • Mode démo actif'}
         </Typography>
       </Box>
     </Container>

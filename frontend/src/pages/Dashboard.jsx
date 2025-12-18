@@ -1,7 +1,9 @@
-// frontend/src/pages/Dashboard.jsx
+// frontend/src/pages/Dashboard.jsx - VERSION CORRIGÉE AVEC PRODUCTION
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { getDashboardStats, getRecentOrders, getFamilyMembers } from '../services/api';
+import { getMemberImage, IMAGES_CONFIG, getImageUrl } from '../config/images';
 import {
   Container,
   Paper,
@@ -19,15 +21,13 @@ import {
   Tabs,
   LinearProgress,
   Alert,
-  List,
-  ListItem,
-  ListItemAvatar,
-  ListItemText,
   Table,
   TableHead,
   TableRow,
   TableCell,
   TableBody,
+  CardMedia,
+  CardActions,
 } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import FamilyRestroomIcon from '@mui/icons-material/FamilyRestroom';
@@ -41,11 +41,13 @@ import BuildIcon from '@mui/icons-material/Build';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import HomeIcon from '@mui/icons-material/Home';
+import FactoryIcon from '@mui/icons-material/Factory';
+import PhotoLibraryIcon from '@mui/icons-material/PhotoLibrary';
+import GroupsIcon from '@mui/icons-material/Groups';
 import { toast } from 'react-hot-toast';
-import api from '../services/api';
 
 const Dashboard = () => {
-  const { user, logout, getFamilyMembers } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -61,6 +63,7 @@ const Dashboard = () => {
     revenue: 0
   });
   const [recentOrders, setRecentOrders] = useState([]);
+  const [isOfflineMode, setIsOfflineMode] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -68,31 +71,73 @@ const Dashboard = () => {
 
   const loadData = async () => {
     setLoading(true);
+    setIsOfflineMode(false);
+    
     try {
-      const members = await getFamilyMembers();
-      setFamilyMembers(members);
-
-      // Dashboard stats from backend
+      // Charger les membres de la famille
       try {
-        const sRes = await api.get('/api/dashboard/stats');
-        if (sRes?.data) {
-          setStats(prev => ({ ...prev, ...sRes.data }));
-        }
-      } catch (e) {
-        console.warn('Could not load dashboard stats', e);
+        const members = await getFamilyMembers();
+        setFamilyMembers(members || []);
+      } catch (memberError) {
+        console.warn('API membres non disponible, utilisation données locales:', memberError);
+        setFamilyMembers(IMAGES_CONFIG.FAMILY_MEMBERS.map(m => ({
+          ...m,
+          profileImage: getMemberImage(m),
+          isFallback: true
+        })));
+        setIsOfflineMode(true);
       }
 
-      // Recent orders
+      // Charger les statistiques
       try {
-        const oRes = await api.get('/api/orders?limit=5');
-        const recent = oRes?.data?.data || [];
-        setRecentOrders(recent);
-      } catch (e) {
-        console.warn('Could not load recent orders', e);
+        const statsData = await getDashboardStats();
+        setStats(prev => ({ ...prev, ...statsData }));
+      } catch (statsError) {
+        console.warn('Statistiques non disponibles:', statsError);
+        setStats({
+          totalMembers: familyMembers.length || IMAGES_CONFIG.FAMILY_MEMBERS.length,
+          totalClients: 12,
+          totalOrders: 24,
+          activeProjects: 3,
+          upcomingEvents: 2,
+          totalDocuments: 15,
+          completionRate: 75,
+          revenue: 1250000
+        });
+      }
+
+      // Charger les commandes récentes
+      try {
+        const orders = await getRecentOrders(5);
+        setRecentOrders(orders || []);
+      } catch (ordersError) {
+        console.warn('Commandes non disponibles:', ordersError);
+        setRecentOrders([
+          { 
+            id: 'CMD-001', 
+            clientName: 'Client Test 1', 
+            orderDate: new Date(), 
+            totalQty: 10, 
+            unitPrice: 5000, 
+            totalPrice: 50000, 
+            status: 'En cours' 
+          },
+          { 
+            id: 'CMD-002', 
+            clientName: 'Client Test 2', 
+            orderDate: new Date(Date.now() - 86400000), 
+            totalQty: 5, 
+            unitPrice: 8000, 
+            totalPrice: 40000, 
+            status: 'Terminé' 
+          },
+        ]);
       }
 
     } catch (error) {
+      console.error('Erreur générale:', error);
       toast.error('Erreur lors du chargement des données');
+      setIsOfflineMode(true);
     } finally {
       setLoading(false);
     }
@@ -102,21 +147,13 @@ const Dashboard = () => {
     switch (role) {
       case 'SUPER_ADMIN':
       case 'STRUCTURE': return '#2E7D32';
-      case 'INSPIRATION': return '#9C27B0';
-      case 'CREATION': return '#FF9800';
-      case 'COMMUNICATION': return '#2196F3';
+      case 'INSPIRATION':
+      case 'INSPIRATION_CREATIVITY': return '#9C27B0';
+      case 'CREATION':
+      case 'OPERATIONS_DESIGN': return '#FF9800';
+      case 'COMMUNICATION':
+      case 'ADMIN_COMMUNICATION': return '#2196F3';
       default: return '#666';
-    }
-  };
-
-  const getRoleIcon = (role) => {
-    switch (role) {
-      case 'SUPER_ADMIN':
-      case 'STRUCTURE': return '👑';
-      case 'INSPIRATION': return '💡';
-      case 'CREATION': return '🎨';
-      case 'COMMUNICATION': return '📢';
-      default: return '👤';
     }
   };
 
@@ -124,10 +161,23 @@ const Dashboard = () => {
     switch (role) {
       case 'SUPER_ADMIN': return 'Super Admin';
       case 'STRUCTURE': return 'Structure';
-      case 'INSPIRATION': return 'Inspiration';
-      case 'CREATION': return 'Création';
-      case 'COMMUNICATION': return 'Communication';
+      case 'INSPIRATION':
+      case 'INSPIRATION_CREATIVITY': return 'Inspiration & Créativité';
+      case 'CREATION':
+      case 'OPERATIONS_DESIGN': return 'Opérations & Design';
+      case 'COMMUNICATION':
+      case 'ADMIN_COMMUNICATION': return 'Admin & Communication';
       default: return role;
+    }
+  };
+
+  const getFamilyRoleLabel = (familyRole) => {
+    switch (familyRole) {
+      case 'STRUCTURE': return 'Structure';
+      case 'INSPIRATION_CREATIVITY': return 'Inspiration & Créativité';
+      case 'OPERATIONS_DESIGN': return 'Opérations & Design';
+      case 'ADMIN_COMMUNICATION': return 'Admin & Communication';
+      default: return familyRole;
     }
   };
 
@@ -138,6 +188,11 @@ const Dashboard = () => {
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
+  };
+
+  const testImage = (url) => {
+    console.log(`🖼️ Test image: ${url}`);
+    return url;
   };
 
   if (loading && !user) {
@@ -157,7 +212,11 @@ const Dashboard = () => {
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Avatar 
-              src={user?.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || '')}&background=${getRoleColor(user?.role)?.replace('#', '')}&color=fff`}
+              src={getMemberImage(user)}
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=${getRoleColor(user?.role).replace('#', '')}&color=fff`;
+              }}
               sx={{ 
                 width: 60,
                 height: 60,
@@ -169,7 +228,7 @@ const Dashboard = () => {
               <Typography variant="h4" component="h1" sx={{ fontWeight: 600, color: getRoleColor(user?.role) }}>
                 Bienvenue, {user?.name} !
               </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1, flexWrap: 'wrap' }}>
                 <Chip 
                   label={getRoleLabel(user?.role)} 
                   sx={{ 
@@ -182,6 +241,15 @@ const Dashboard = () => {
                 <Typography variant="body2" color="text.secondary">
                   {user?.email}
                 </Typography>
+                {isOfflineMode && (
+                  <Chip 
+                    label="Mode local" 
+                    size="small" 
+                    color="warning" 
+                    variant="outlined"
+                    sx={{ ml: 1 }}
+                  />
+                )}
               </Box>
             </Box>
           </Box>
@@ -217,7 +285,17 @@ const Dashboard = () => {
         </Box>
       </Paper>
 
-      {/* Tabs Navigation */}
+      {/* Mode local warning */}
+      {isOfflineMode && (
+        <Alert severity="warning" sx={{ mb: 3 }}>
+          Mode local activé - Certaines données peuvent ne pas être à jour. 
+          <Button size="small" onClick={loadData} sx={{ ml: 2 }}>
+            Réessayer
+          </Button>
+        </Alert>
+      )}
+
+      {/* Tabs Navigation - AJOUT DE LA TAB PRODUCTION */}
       <Paper elevation={2} sx={{ mb: 3, borderRadius: 2 }}>
         <Tabs
           value={activeTab}
@@ -234,6 +312,12 @@ const Dashboard = () => {
           <Tab 
             icon={<FamilyRestroomIcon />} 
             label="Équipe Familiale" 
+            iconPosition="start"
+            sx={{ py: 2 }}
+          />
+          <Tab 
+            icon={<FactoryIcon />} 
+            label="Équipe Production" 
             iconPosition="start"
             sx={{ py: 2 }}
           />
@@ -258,7 +342,7 @@ const Dashboard = () => {
                 { label: 'Événements', value: stats.upcomingEvents, icon: <CalendarTodayIcon />, color: 'warning' },
                 { label: 'Documents', value: stats.totalDocuments, icon: <DescriptionIcon />, color: 'info' },
                 { label: 'Taux de Complétion', value: `${stats.completionRate}%`, icon: <TrendingUpIcon />, color: 'secondary' },
-                { label: 'Revenu (MGA)', value: `${new Intl.NumberFormat('fr-MG').format(stats.revenue)} MGA`, icon: '💰', color: 'success' },
+                { label: 'Revenu (MGA)', value: `${new Intl.NumberFormat('fr-MG').format(stats.revenue)}`, icon: '💰', color: 'success' },
               ].map((stat, index) => (
                 <Grid item xs={12} sm={6} md={4} lg={2} key={index}>
                   <Card sx={{ height: '100%', textAlign: 'center' }}>
@@ -309,74 +393,24 @@ const Dashboard = () => {
               
               <Alert severity="info" sx={{ mt: 2 }}>
                 <Typography variant="body2">
-                  <strong>Votre mission :</strong> {user?.role === 'STRUCTURE' ? 'Définir la stratégie et prendre les décisions clés.' :
-                    user?.role === 'INSPIRATION' ? 'Apporter des idées innovantes et créatives.' :
-                    user?.role === 'CREATION' ? 'Transformer les idées en réalisations concrètes.' :
+                  <strong>Votre mission :</strong> {user?.role === 'STRUCTURE' || user?.role === 'SUPER_ADMIN' ? 'Définir la stratégie et prendre les décisions clés.' :
+                    user?.role === 'INSPIRATION' || user?.role === 'INSPIRATION_CREATIVITY' ? 'Apporter des idées innovantes et créatives.' :
+                    user?.role === 'CREATION' || user?.role === 'OPERATIONS_DESIGN' ? 'Transformer les idées en réalisations concrètes.' :
                     'Assurer la communication et les relations avec nos partenaires.'}
                 </Typography>
               </Alert>
             </Paper>
           </Grid>
 
-          {/* Quick Actions */}
-          <Grid item xs={12} md={6}>
-            <Paper elevation={2} sx={{ p: 3, borderRadius: 2, height: '100%' }}>
-              <Typography variant="h6" gutterBottom>
-                ⚡ Actions Rapides
-              </Typography>
-              <List>
-                {[
-                  { label: 'Voir l\'équipe', action: () => setActiveTab(1) },
-                  { label: 'Accéder aux outils', action: () => setActiveTab(2) },
-                  { label: 'Voir le calendrier', action: () => toast.info('Bientôt disponible') },
-                  { label: 'Consulter les documents', action: () => toast.info('Bientôt disponible') },
-                ].map((item, index) => (
-                  <ListItem 
-                    key={index}
-                    button 
-                    onClick={item.action}
-                    sx={{ borderRadius: 1, mb: 1 }}
-                  >
-                    <ListItemText primary={item.label} />
-                  </ListItem>
-                ))}
-              </List>
-            </Paper>
-          </Grid>
-
-          {/* Recent Activity */}
-          <Grid item xs={12} md={6}>
-            <Paper elevation={2} sx={{ p: 3, borderRadius: 2, height: '100%' }}>
-              <Typography variant="h6" gutterBottom>
-                📅 Activité Récente
-              </Typography>
-              <List>
-                {[
-                  { text: 'Connexion réussie', time: 'Il y a 2 minutes', icon: '✅' },
-                  { text: 'Mise à jour du profil', time: 'Il y a 1 heure', icon: '👤' },
-                  { text: 'Nouveau projet ajouté', time: 'Il y a 3 heures', icon: '📁' },
-                  { text: 'Réunion d\'équipe planifiée', time: 'Hier', icon: '👥' },
-                ].map((item, index) => (
-                  <ListItem key={index} sx={{ mb: 1 }}>
-                    <ListItemAvatar>
-                      <Avatar sx={{ bgcolor: 'grey.100', color: 'text.primary' }}>
-                        {item.icon}
-                      </Avatar>
-                    </ListItemAvatar>
-                    <ListItemText 
-                      primary={item.text}
-                      secondary={item.time}
-                    />
-                  </ListItem>
-                ))}
-              </List>
-            </Paper>
-          </Grid>
-
           {/* Recent Orders */}
           <Grid item xs={12}>
             <Paper elevation={2} sx={{ p: 2, mt: 3 }}>
-              <Typography variant="h6" gutterBottom>📦 Commandes récentes</Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h6">📦 Commandes récentes</Typography>
+                {isOfflineMode && (
+                  <Chip label="Données exemple" size="small" color="warning" />
+                )}
+              </Box>
               <Table>
                 <TableHead>
                   <TableRow>
@@ -390,19 +424,31 @@ const Dashboard = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {recentOrders.map(o => (
-                    <TableRow key={o.id} hover onClick={() => navigate(`/orders/${o.id}`)} sx={{ cursor: 'pointer' }}>
+                  {recentOrders.map((o, index) => (
+                    <TableRow key={index} hover sx={{ cursor: 'pointer' }}>
                       <TableCell>{o.id}</TableCell>
                       <TableCell>{o.clientName}</TableCell>
-                      <TableCell>{new Date(o.orderDate).toLocaleString()}</TableCell>
+                      <TableCell>{new Date(o.orderDate).toLocaleDateString('fr-FR')}</TableCell>
                       <TableCell>{o.totalQty}</TableCell>
-                      <TableCell>{new Intl.NumberFormat('fr-MG').format(o.unitPrice)} MGA</TableCell>
-                      <TableCell>{new Intl.NumberFormat('fr-MG').format(o.totalPrice)} MGA</TableCell>
-                      <TableCell>{o.status}</TableCell>
+                      <TableCell>{new Intl.NumberFormat('fr-MG').format(o.unitPrice)}</TableCell>
+                      <TableCell>{new Intl.NumberFormat('fr-MG').format(o.totalPrice)}</TableCell>
+                      <TableCell>
+                        <Chip 
+                          label={o.status} 
+                          size="small" 
+                          color={o.status === 'Terminé' ? 'success' : 'warning'}
+                        />
+                      </TableCell>
                     </TableRow>
                   ))}
                   {recentOrders.length === 0 && (
-                    <TableRow><TableCell colSpan={7}>Aucune commande récente.</TableCell></TableRow>
+                    <TableRow>
+                      <TableCell colSpan={7} align="center">
+                        <Typography variant="body2" color="text.secondary">
+                          Aucune commande récente
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
                   )}
                 </TableBody>
               </Table>
@@ -415,51 +461,74 @@ const Dashboard = () => {
         <Grid container spacing={3}>
           <Grid item xs={12}>
             <Paper elevation={2} sx={{ p: 3, borderRadius: 2 }}>
-              <Typography variant="h5" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <FamilyRestroomIcon /> Équipe Familiale
-              </Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h5" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <FamilyRestroomIcon /> Équipe Familiale
+                </Typography>
+                {isOfflineMode && (
+                  <Chip label="Mode local" color="warning" />
+                )}
+              </Box>
               <Typography variant="body1" color="text.secondary" paragraph>
                 Découvrez les membres de l'équipe familiale et leurs rôles
               </Typography>
               <Divider sx={{ my: 2 }} />
               
               <Grid container spacing={3}>
-                {familyMembers.map((member) => (
-                  <Grid item xs={12} sm={6} md={3} key={member.id}>
+                {familyMembers.map((member, index) => (
+                  <Grid item xs={12} sm={6} md={3} key={member.id || index}>
                     <Card sx={{ 
                       height: '100%', 
-                      borderLeft: `4px solid ${member.color}`,
+                      borderLeft: `4px solid ${member.color || getRoleColor(member.role)}`,
                       transition: 'transform 0.3s',
+                      opacity: member.isFallback ? 0.9 : 1,
                       '&:hover': {
                         transform: 'translateY(-8px)',
                         boxShadow: 6,
                       }
                     }}>
+                      {member.isFallback && (
+                        <Chip 
+                          label="Local"
+                          size="small"
+                          sx={{ 
+                            position: 'absolute',
+                            top: 8,
+                            right: 8,
+                            zIndex: 1,
+                            bgcolor: 'warning.light',
+                            color: 'warning.dark'
+                          }}
+                        />
+                      )}
+                      
                       <CardContent sx={{ textAlign: 'center' }}>
                         <Avatar 
-                          src={member.profileImage}
+                          src={getMemberImage(member)}
                           onError={(e) => {
-                            e.target.src = member.image;
+                            e.target.onerror = null;
+                            e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=${(member.color || getRoleColor(member.role)).replace('#', '')}&color=fff`;
                           }}
                           sx={{ 
                             width: 100, 
                             height: 100,
                             margin: '0 auto 16px',
-                            border: `3px solid ${member.color}`,
+                            border: `3px solid ${member.color || getRoleColor(member.role)}`,
                             objectFit: 'cover'
                           }}
                         />
                         
                         <Typography variant="h6" component="div" gutterBottom sx={{ fontWeight: 600, minHeight: 60 }}>
                           {member.name}
+                          {member.isFallback && ' (Local)'}
                         </Typography>
                         
                         <Chip 
-                          label={member.role}
+                          label={getFamilyRoleLabel(member.familyRole) || getRoleLabel(member.role)}
                           size="small"
                           sx={{ 
-                            bgcolor: `${member.color}20`,
-                            color: member.color,
+                            bgcolor: `${member.color || getRoleColor(member.role)}20`,
+                            color: member.color || getRoleColor(member.role),
                             fontWeight: 600,
                             mb: 1
                           }}
@@ -469,9 +538,14 @@ const Dashboard = () => {
                           {member.description}
                         </Typography>
                         
-                        <Typography variant="body2" sx={{ fontStyle: 'italic', color: member.color }}>
+                        <Typography variant="body2" sx={{ fontStyle: 'italic', color: member.color || getRoleColor(member.role) }}>
                           ✉️ {member.email}
                         </Typography>
+                        {member.phone && (
+                          <Typography variant="body2" sx={{ fontStyle: 'italic', color: member.color || getRoleColor(member.role) }}>
+                            📱 {member.phone}
+                          </Typography>
+                        )}
                       </CardContent>
                     </Card>
                   </Grid>
@@ -490,8 +564,9 @@ const Dashboard = () => {
                   variant="contained" 
                   color="primary"
                   onClick={loadData}
+                  startIcon="🔄"
                 >
-                  🔄 Actualiser les photos
+                  Actualiser
                 </Button>
               </Box>
             </Paper>
@@ -499,7 +574,151 @@ const Dashboard = () => {
         </Grid>
       )}
 
+      {/* NOUVELLE SECTION : ÉQUIPE DE PRODUCTION */}
       {activeTab === 2 && (
+        <Grid container spacing={3}>
+          <Grid item xs={12}>
+            <Paper elevation={2} sx={{ p: 3, borderRadius: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h5" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <FactoryIcon /> Équipe de Production
+                </Typography>
+                <Chip label={`${IMAGES_CONFIG.PRODUCTION_TEAM.length} membres`} color="success" />
+              </Box>
+              <Typography variant="body1" color="text.secondary" paragraph>
+                Notre équipe de production dévouée qui donne vie à vos projets
+              </Typography>
+              <Divider sx={{ my: 2 }} />
+              
+              {/* Galerie de l'équipe de production */}
+              <Grid container spacing={3}>
+                {IMAGES_CONFIG.PRODUCTION_TEAM.map((member, index) => (
+                  <Grid item xs={12} sm={6} md={4} lg={3} key={member.id || index}>
+                    <Card sx={{ 
+                      height: '100%', 
+                      transition: 'transform 0.3s',
+                      '&:hover': {
+                        transform: 'translateY(-8px)',
+                        boxShadow: 6,
+                      }
+                    }}>
+                      <CardContent sx={{ textAlign: 'center' }}>
+                        <Box sx={{ position: 'relative', mb: 2 }}>
+                          <Avatar 
+                            src={getImageUrl(member.imagePath)}
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=4caf50&color=fff&size=400`;
+                            }}
+                            sx={{ 
+                              width: 150, 
+                              height: 150,
+                              margin: '0 auto',
+                              objectFit: 'cover',
+                              border: `3px solid ${member.color || '#4CAF50'}`
+                            }}
+                          />
+                        </Box>
+                        
+                        <Typography variant="h6" component="div" gutterBottom sx={{ fontWeight: 600 }}>
+                          {member.name}
+                        </Typography>
+                        
+                        <Chip 
+                          label={member.role}
+                          size="small"
+                          sx={{ 
+                            bgcolor: '#4caf5020',
+                            color: '#4caf50',
+                            fontWeight: 600,
+                            mb: 2
+                          }}
+                        />
+                        
+                        <Typography variant="body2" color="text.secondary" sx={{ minHeight: 60 }}>
+                          {member.description}
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+              
+              {/* Images supplémentaires de l'atelier */}
+              <Box sx={{ mt: 4 }}>
+                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <PhotoLibraryIcon /> Notre atelier en images
+                </Typography>
+                <Grid container spacing={2}>
+                  {[
+                    {
+                      title: 'Atelier de sérigraphie',
+                      image: IMAGES_CONFIG.ATELIER,
+                      description: 'Notre espace de travail dédié à la qualité'
+                    },
+                    {
+                      title: 'Équipe au travail',
+                      image: IMAGES_CONFIG.TEAM_FAMILY,
+                      description: 'Collaboration et expertise au quotidien'
+                    },
+                    {
+                      title: 'Inauguration',
+                      image: IMAGES_CONFIG.INAUGURATION,
+                      description: 'Le début de notre aventure familiale'
+                    }
+                  ].map((item, index) => (
+                    <Grid item xs={12} md={4} key={index}>
+                      <Card>
+                        <CardMedia
+                          component="img"
+                          height="200"
+                          image={item.image}
+                          alt={item.title}
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = `https://via.placeholder.com/300x200/4caf50/ffffff?text=${encodeURIComponent(item.title)}`;
+                          }}
+                        />
+                        <CardContent>
+                          <Typography variant="h6" gutterBottom>
+                            {item.title}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {item.description}
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+              </Box>
+              
+              <Box sx={{ mt: 4, textAlign: 'center' }}>
+                <Button 
+                  variant="contained" 
+                  color="success"
+                  onClick={() => navigate('/gallery')}
+                  startIcon={<PhotoLibraryIcon />}
+                  size="large"
+                  sx={{ mr: 2 }}
+                >
+                  Voir la galerie complète
+                </Button>
+                <Button 
+                  variant="outlined" 
+                  onClick={() => navigate('/production')}
+                  startIcon={<GroupsIcon />}
+                  size="large"
+                >
+                  Page détaillée production
+                </Button>
+              </Box>
+            </Paper>
+          </Grid>
+        </Grid>
+      )}
+
+      {activeTab === 3 && (
         <Grid container spacing={3}>
           <Grid item xs={12}>
             <Paper elevation={2} sx={{ p: 3, borderRadius: 2 }}>
@@ -512,7 +731,6 @@ const Dashboard = () => {
               <Divider sx={{ my: 2 }} />
               
               <Grid container spacing={3}>
-                {/* Outils communs à tous */}
                 {[
                   { 
                     title: 'Tableau de bord', 
@@ -522,28 +740,56 @@ const Dashboard = () => {
                     action: () => setActiveTab(0)
                   },
                   { 
-                    title: 'Équipe', 
+                    title: 'Équipe Familiale', 
                     description: 'Informations sur l\'équipe familiale', 
                     icon: '👨‍👩‍👧‍👦',
                     color: '#9c27b0',
                     action: () => setActiveTab(1)
                   },
                   { 
-                    title: 'Calendrier', 
-                    description: 'Planification des activités', 
-                    icon: '📅',
+                    title: 'Équipe Production', 
+                    description: 'Notre équipe de production', 
+                    icon: '🏭',
+                    color: '#4caf50',
+                    action: () => setActiveTab(2)
+                  },
+                  { 
+                    title: 'Galerie', 
+                    description: 'Photos d\'inauguration', 
+                    icon: '🎉',
                     color: '#ff9800',
-                    action: () => toast.info('Calendrier bientôt disponible')
+                    action: () => navigate('/gallery')
+                  },
+                  { 
+                    title: 'Clients', 
+                    description: 'Gestion des clients', 
+                    icon: '👥',
+                    color: '#2196f3',
+                    action: () => navigate('/clients')
+                  },
+                  { 
+                    title: 'Commandes', 
+                    description: 'Suivi des commandes', 
+                    icon: '📦',
+                    color: '#673ab7',
+                    action: () => navigate('/orders')
+                  },
+                  { 
+                    title: 'Calendrier', 
+                    description: 'Planning et rendez-vous', 
+                    icon: '📅',
+                    color: '#009688',
+                    action: () => navigate('/calendar')
                   },
                   { 
                     title: 'Documents', 
-                    description: 'Gestion des documents partagés', 
+                    description: 'Gestion des documents', 
                     icon: '📁',
-                    color: '#4caf50',
-                    action: () => toast.info('Documents bientôt disponible')
+                    color: '#795548',
+                    action: () => navigate('/documents')
                   },
                 ].map((tool, index) => (
-                  <Grid item xs={12} sm={6} md={3} key={index}>
+                  <Grid item xs={12} sm={6} md={4} lg={3} key={index}>
                     <Card sx={{ 
                       height: '100%', 
                       textAlign: 'center',
@@ -602,6 +848,7 @@ const Dashboard = () => {
           <Button size="small" onClick={handleLogout} sx={{ ml: 1 }}>
             Se déconnecter
           </Button>
+          {isOfflineMode && ' • Mode local activé'}
         </Typography>
       </Box>
     </Container>

@@ -1,16 +1,28 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { Box, CircularProgress, Alert, Button, Typography } from '@mui/material';
 
 const ProtectedRoute = ({ children, requiredRole }) => {
   const { user, isAuthenticated, loading } = useAuth();
 
   if (loading) {
     return (
-      <div className="loading-container">
-        <div className="spinner"></div>
-        <p>Vérification de l'authentification...</p>
-      </div>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+          flexDirection: 'column',
+          gap: 2,
+        }}
+      >
+        <CircularProgress />
+        <Typography variant="body1" color="text.secondary">
+          Vérification de l'authentification...
+        </Typography>
+      </Box>
     );
   }
 
@@ -20,26 +32,51 @@ const ProtectedRoute = ({ children, requiredRole }) => {
 
   if (requiredRole && user?.role !== requiredRole) {
     return (
-      <div className="unauthorized-container">
-        <div className="unauthorized-content">
-          <h2>⛔ Accès interdit</h2>
-          <div className="error-icon">🚫</div>
-          <p>Vous n'avez pas les permissions nécessaires pour accéder à cette page.</p>
-          <div className="role-info">
-            <p><strong>Rôle requis :</strong> {requiredRole}</p>
-            <p><strong>Votre rôle :</strong> {user?.role}</p>
-          </div>
-          <p className="contact-admin">
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '80vh',
+          flexDirection: 'column',
+          gap: 3,
+          p: 3,
+        }}
+      >
+        <Alert 
+          severity="error" 
+          sx={{ 
+            width: '100%', 
+            maxWidth: 600,
+            '& .MuiAlert-icon': { fontSize: 40 }
+          }}
+        >
+          <Typography variant="h5" gutterBottom>
+            ⛔ Accès interdit
+          </Typography>
+          <Typography variant="body1" paragraph>
+            Vous n'avez pas les permissions nécessaires pour accéder à cette page.
+          </Typography>
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="body2">
+              <strong>Rôle requis :</strong> {requiredRole}
+            </Typography>
+            <Typography variant="body2">
+              <strong>Votre rôle :</strong> {user?.role}
+            </Typography>
+          </Box>
+          <Typography variant="body2" sx={{ mt: 2, fontStyle: 'italic' }}>
             Contactez l'administrateur (Structure) pour obtenir les permissions nécessaires.
-          </p>
-          <button 
-            onClick={() => window.location.href = '/dashboard'}
-            className="back-button"
-          >
-            ← Retour au dashboard
-          </button>
-        </div>
-      </div>
+          </Typography>
+        </Alert>
+        <Button
+          variant="contained"
+          onClick={() => window.location.href = '/dashboard'}
+          sx={{ mt: 2 }}
+        >
+          ← Retour au tableau de bord
+        </Button>
+      </Box>
     );
   }
 

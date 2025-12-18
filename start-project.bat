@@ -1,30 +1,53 @@
 @echo off
 chcp 65001 >nul
 echo ===================================================
-echo íº€ LANCEMENT DE BYGAGOOS-INK - PLATEFORME FAMILIALE
+echo ðŸš€ LANCEMENT DE BYGAGOOS-INK - PLATEFORME DOCKER
 echo ===================================================
 
 echo.
-echo 1. í°³ DÃ‰MARRAGE DES SERVICES DOCKER...
+echo 1. ðŸ³ ARRÃŠT DES ANCIENS CONTENEURS...
+docker-compose down 2>nul
+
+echo.
+echo 2. ðŸ³ DÃ‰MARRAGE DES SERVICES DOCKER...
 cd backend
 docker-compose up -d
-timeout /t 5 /nobreak >nul
+timeout /t 10 /nobreak >nul
 
 echo.
-echo 2. í³Š VÃ‰RIFICATION DES CONTENEURS...
-docker ps --filter name=bygagoos --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+echo 3. âœ… VÃ‰RIFICATION DES CONTENEURS...
+docker ps --filter name=bygagoos --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" || (
+    echo âŒ Docker non disponible
+    echo Lancement en mode local...
+    goto :LOCAL_MODE
+)
 
 echo.
-echo 3. íº€ DÃ‰MARRAGE DU BACKEND (PORT 3001)...
-start "Backend ByGagoos-Ink" cmd /k "npm start"
+echo 4. ðŸ“¦ INSTALLATION DES DÃ‰PENDANCES BACKEND...
+npm install 2>nul
+npx prisma generate 2>nul
 
 echo.
-echo 4. í¾¨ DÃ‰MARRAGE DE PRISMA STUDIO (PORT 5555)...
+echo 5. ðŸ—ƒï¸  INITIALISATION DE LA BASE DE DONNÃ‰ES...
+echo Attente de PostgreSQL...
+timeout /t 15 /nobreak >nul
+node scripts/seed-docker.js 2>nul || (
+    echo âš ï¸  Erreur seeding, tentative alternative...
+    npx prisma db push --accept-data-loss 2>nul
+)
+
+echo.
+echo 6. ðŸš€ DÃ‰MARRAGE DU BACKEND (PORT 3001)...
+start "Backend ByGagoos-Ink" cmd /k "npm run dev"
+
+echo.
+echo 7. ðŸ”§ DÃ‰MARRAGE DE PRISMA STUDIO (PORT 5555)...
 start "Prisma Studio" cmd /k "npx prisma studio"
 
 echo.
-echo 5. í³± DÃ‰MARRAGE DU FRONTEND (PORT 5173)...
+echo 8. ðŸŒ DÃ‰MARRAGE DU FRONTEND (PORT 5173)...
 cd ../frontend
+npm install 2>nul
 start "Frontend ByGagoos-Ink" cmd /k "npm run dev"
 
 echo.
@@ -33,18 +56,53 @@ echo âœ… TOUS LES SERVICES SONT EN COURS DE DÃ‰MARRAGE !
 echo ===================================================
 
 echo.
-echo í¼ URLs D'ACCÃˆS :
+echo ðŸŒ URLs D'ACCÃˆS :
 echo    Frontend React : http://localhost:5173
 echo    Backend API    : http://localhost:3001
 echo    Prisma Studio  : http://localhost:5555
-echo    PGAdmin        : http://localhost:5050
+echo    PGAdmin        : http://localhost:5050 (admin@bygagoos.com/password)
 
 echo.
-echo í±¨â€í±©â€í±§â€í±¦ IDENTIFIANTS DE TEST :
+echo ðŸ” IDENTIFIANTS DE TEST :
 echo    Email    : tovoniaina.rahendrison@gmail.com
 echo    Password : ByGagoos2025!
 
 echo.
-echo â³ Patientez quelques secondes que tous les services dÃ©marrent...
+echo ðŸ³ Ã‰TAT DOCKER : docker ps --filter name=bygagoos
+echo.
+goto :END
+
+:LOCAL_MODE
+echo.
+echo âš ï¸  MODE LOCAL SANS DOCKER
+echo.
+
+echo ðŸ“¦ INSTALLATION BACKEND LOCAL...
+cd backend
+npm install 2>nul
+npx prisma generate 2>nul
+
+echo ðŸš€ DÃ‰MARRAGE BACKEND LOCAL...
+start "Backend Local" cmd /k "npm run dev"
+
+echo ðŸŒ DÃ‰MARRAGE FRONTEND LOCAL...
+cd ../frontend
+npm install 2>nul
+start "Frontend Local" cmd /k "npm run dev"
+
+echo.
+echo âœ… SERVICES LOCAUX DÃ‰MARRÃ‰S !
+echo.
+echo ðŸŒ URLs :
+echo    Frontend : http://localhost:5173
+echo    Backend  : http://localhost:3001
+echo.
+echo ðŸ” IDENTIFIANTS : tovoniaina.rahendrison@gmail.com / ByGagoos2025!
+
+:END
+echo.
+echo â³ Patientez 30 secondes que tous les services dÃ©marrent...
 echo ===================================================
-pause
+echo Appuyez sur une touche pour ouvrir le frontend...
+pause >nul
+start http://localhost:5173

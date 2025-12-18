@@ -1,0 +1,25 @@
+FROM node:18-alpine
+
+# Installer OpenSSL et autres dépendances nécessaires
+RUN apk add --no-cache openssl
+
+WORKDIR /app
+
+# Copier package.json d'abord pour mieux utiliser le cache
+COPY package*.json ./
+COPY prisma ./prisma/
+
+# Installer les dépendances
+RUN npm install
+
+# Générer le client Prisma
+RUN npx prisma generate
+
+# Copier le reste du code
+COPY . .
+
+# Exposer le port
+EXPOSE 3002
+
+# Commande de démarrage
+CMD ["npm", "start"]

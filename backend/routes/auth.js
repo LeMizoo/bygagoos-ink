@@ -31,8 +31,8 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // Vérifier le mot de passe
-    const passwordValid = await bcrypt.compare(password, user.hashedPassword);
+    // Vérifier le mot de passe - CORRECTION ICI : 'password' au lieu de 'hashedPassword'
+    const passwordValid = await bcrypt.compare(password, user.password);
     
     if (!passwordValid) {
       return res.status(401).json({ 

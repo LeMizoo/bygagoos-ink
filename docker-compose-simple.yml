@@ -1,42 +1,102 @@
+# docker-compose-simple.yml - Version simple
 version: '3.8'
 
 services:
+  # --- Backend simplifié ---
   backend:
     image: node:18-alpine
     container_name: bygagoos-simple-backend
     ports:
-      - "5000:5000"
+      - "3001:3001"
     working_dir: /app
     command: >
       sh -c "
       npm init -y &&
-      npm install express cors &&
-      echo 'const express = require(\"express\"); 
-      const cors = require(\"cors\"); 
-      const app = express(); 
-      app.use(cors()); 
-      app.get(\"/health\", (req, res) => res.json({status:\"healthy\",service:\"ByGagoos\"})); 
-      app.get(\"/api/family\", (req, res) => res.json({members:[
-        {name:\"Tovoniaina\",role:\"Structure\"},
-        {name:\"Volatiana\",role:\"Inspiration\"},
-        {name:\"Miantsatiana\",role:\"Création\"},
-        {name:\"Tia Faniry\",role:\"Communication\"}
-      ]})); 
-      app.listen(5000, \"0.0.0.0\", () => console.log(\"✅ Backend en ligne\"));' > server.js &&
+      npm install express cors bcryptjs jsonwebtoken &&
+      echo '
+      const express = require(\"express\");
+      const cors = require(\"cors\");
+      const bcrypt = require(\"bcryptjs\");
+      const jwt = require(\"jsonwebtoken\");
+      
+      const app = express();
+      const PORT = 3001;
+      const JWT_SECRET = \"bygagoos-simple-secret\";
+      
+      app.use(cors());
+      app.use(express.json());
+      
+      // Données en mémoire
+      const users = [
+        {
+          id: \"1\",
+          email: \"tovoniaina.rahendrison@gmail.com\",
+          password: bcrypt.hashSync(\"ByGagoos2025!\", 10),
+          name: \"Tovoniaina RAHENDRISON\",
+          role: \"SUPER_ADMIN\"
+        }
+      ];
+      
+      // Routes
+      app.get(\"/api/health\", (req, res) => {
+        res.json({ status: \"OK\", service: \"ByGagoos Simple API\" });
+      });
+      
+      app.post(\"/api/auth/login\", async (req, res) => {
+        try {
+          const { email, password } = req.body;
+          const user = users.find(u => u.email === email);
+          
+          if (!user || !(await bcrypt.compare(password, user.password))) {
+            return res.status(401).json({ message: \"Identifiants incorrects\" });
+          }
+          
+          const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET);
+          
+          res.json({
+            success: true,
+            token,
+            user: {
+              id: user.id,
+              name: user.name,
+              email: user.email,
+              role: user.role
+            }
+          });
+        } catch (error) {
+          res.status(500).json({ message: \"Erreur serveur\" });
+        }
+      });
+      
+      app.listen(PORT, () => {
+        console.log(\`✅ Backend simple démarré sur le port \${PORT}\`);
+      });
+      ' > server.js &&
       node server.js
       "
     networks:
       - bygagoos-net
+    restart: unless-stopped
 
+  # --- Frontend simplifié ---
   frontend:
-    image: nginx:alpine
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile.dev
     container_name: bygagoos-simple-frontend
     ports:
-      - "3000:80"
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:3001
     volumes:
-      - ./simple-frontend:/usr/share/nginx/html
+      - ./frontend:/app
+      - /app/node_modules
     networks:
       - bygagoos-net
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
 
 networks:
   bygagoos-net:
+    driver: bridge

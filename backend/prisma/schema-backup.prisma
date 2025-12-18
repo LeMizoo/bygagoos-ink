@@ -1,0 +1,112 @@
+// prisma/schema.prisma - VERSION SQLITE CORRIGÉE
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  password    String
+  name        String?
+  role        String   @default("MEMBER")
+  color       String?
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  profile      Profile?
+  familyMember FamilyMember?
+  client       Client?
+
+  @@map("users")
+}
+
+model Profile {
+  id      String  @id @default(cuid())
+  userId  String  @unique
+  avatar  String?
+  bio     String?
+  phone   String?
+  address String?
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("profiles")
+}
+
+model Order {
+  id          String   @id @default(cuid())
+  clientName  String
+  clientEmail String?
+  clientPhone String?
+  description String
+  status      String   @default("PENDING")
+  amount      Float?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("orders")
+}
+
+// Modèle pour les membres de la famille - CORRIGÉ POUR SQLITE
+model FamilyMember {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  familyRole     String
+  skills         String?  // SQLite: String au lieu de Json
+  certifications String?  // SQLite: String au lieu de String[]
+  availability   String?  // SQLite: String au lieu de Json
+  currentRole    String
+  performance    String?  // SQLite: String au lieu de Json
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("family_members")
+}
+
+// Modèle pour les clients - CORRIGÉ POUR SQLITE
+model Client {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  companyName   String?
+  clientType    String?
+  address       String?  // SQLite: String au lieu de Json
+  taxId         String?
+  loyaltyPoints Int      @default(0)
+  totalSpent    Float    @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("clients")
+}
+
+// Modèle pour l'inventaire
+model Inventory {
+  id           String   @id @default(cuid())
+  itemType     String
+  itemName     String
+  color        String?
+  size         String?
+  quantity     Int
+  minimumStock Int
+  unitCost     Float
+  supplier     String?
+  lastRestock  DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("inventory")
+}

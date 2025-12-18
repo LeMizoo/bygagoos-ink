@@ -1,0 +1,506 @@
+// backend/prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// UTILISATEURS FAMILIAUX
+model User {
+  id                  Int       @id @default(autoincrement())
+  email               String    @unique
+  password            String
+  firstName           String    @map("first_name")
+  lastName            String    @map("last_name")
+  phone               String?
+  role                UserRole  @default(FAMILY_MEMBER)
+  familyRole          FamilyRole
+  avatar              String?
+  isActive            Boolean   @default(true) @map("is_active")
+  lastLogin           DateTime? @map("last_login")
+  mustChangePassword  Boolean   @default(true) @map("must_change_password")
+  resetToken          String?   @map("reset_token")
+  resetTokenExpiry    DateTime? @map("reset_token_expiry")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  logs                Log[]
+  activities          UserActivity[]
+  assignedTasks       Task[]     @relation("AssignedTasks")
+  createdTasks        Task[]     @relation("CreatedTasks")
+  clientInteractions  ClientInteraction[]
+  productionOrders    ProductionOrder[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  FAMILY_MEMBER
+  GUEST
+}
+
+enum FamilyRole {
+  STRUCTURE
+  INSPIRATION_CREATIVITY
+  OPERATIONS_DESIGN
+  ADMIN_COMMUNICATION
+}
+
+// CLIENTS
+model Client {
+  id                  Int       @id @default(autoincrement())
+  companyName         String?   @map("company_name")
+  contactPerson       String    @map("contact_person")
+  email               String    @unique
+  phone               String
+  address             String?
+  taxId               String?   @map("tax_id")
+  clientType          ClientType @default(PARTICULAR) @map("client_type")
+  status              ClientStatus @default(ACTIVE)
+  notes               String?
+  totalOrders         Int       @default(0) @map("total_orders")
+  totalAmount         Float     @default(0) @map("total_amount")
+  lastOrderDate       DateTime? @map("last_order_date")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  orders              Order[]
+  interactions        ClientInteraction[]
+  files               ClientFile[]
+  quotations          Quotation[]
+
+  @@map("clients")
+}
+
+enum ClientType {
+  COMPANY
+  ASSOCIATION
+  SCHOOL
+  PARTICULAR
+  OTHER
+}
+
+enum ClientStatus {
+  ACTIVE
+  INACTIVE
+  BLACKLISTED
+  VIP
+}
+
+// COMMANDES
+model Order {
+  id                  Int         @id @default(autoincrement())
+  orderNumber         String      @unique @map("order_number")
+  clientId            Int         @map("client_id")
+  status              OrderStatus @default(PENDING)
+  priority            Priority    @default(MEDIUM)
+  totalAmount         Float       @map("total_amount")
+  depositAmount       Float?      @map("deposit_amount")
+  depositPaid         Boolean     @default(false) @map("deposit_paid")
+  deadline            DateTime
+  deliveryAddress     String?     @map("delivery_address")
+  deliveryNotes       String?     @map("delivery_notes")
+  specialInstructions String?     @map("special_instructions")
+  internalNotes       String?     @map("internal_notes")
+  createdAt           DateTime    @default(now()) @map("created_at")
+  updatedAt           DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  client              Client      @relation(fields: [clientId], references: [id])
+  items               OrderItem[]
+  productionOrders    ProductionOrder[]
+  payments            Payment[]
+  timelineEvents      OrderTimeline[]
+
+  @@map("orders")
+}
+
+enum OrderStatus {
+  DRAFT
+  PENDING
+  CONFIRMED
+  IN_PROGRESS
+  QUALITY_CHECK
+  READY_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+  ARCHIVED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+// ARTICLES DE COMMANDE
+model OrderItem {
+  id                  Int       @id @default(autoincrement())
+  orderId             Int       @map("order_id")
+  productType         ProductType @map("product_type")
+  description         String
+  quantity            Int
+  unitPrice           Float     @map("unit_price")
+  color               String?
+  size                String?
+  designNotes         String?   @map("design_notes")
+  designFileUrl       String?   @map("design_file_url")
+  mockupFileUrl       String?   @map("mockup_file_url")
+  createdAt           DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  order               Order     @relation(fields: [orderId], references: [id])
+  productionItems     ProductionItem[]
+
+  @@map("order_items")
+}
+
+enum ProductType {
+  T_SHIRT
+  POLO
+  HOODIE
+  CAP
+  TOTE_BAG
+  WORK_UNIFORM
+  OTHER_TEXTILE
+  ACCESSORY
+}
+
+// PRODUCTION
+model ProductionOrder {
+  id                  Int         @id @default(autoincrement())
+  orderId             Int         @map("order_id")
+  assignedTo          Int?        @map("assigned_to")
+  status              ProductionStatus @default(PENDING)
+  startDate           DateTime?   @map("start_date")
+  completionDate      DateTime?   @map("completion_date")
+  productionNotes     String?     @map("production_notes")
+  qualityScore        Int?        @map("quality_score")
+  issues              String?
+  createdAt           DateTime    @default(now()) @map("created_at")
+  updatedAt           DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  order               Order       @relation(fields: [orderId], references: [id])
+  assignedUser        User?       @relation(fields: [assignedTo], references: [id])
+  items               ProductionItem[]
+  materials           MaterialUsage[]
+
+  @@map("production_orders")
+}
+
+enum ProductionStatus {
+  PENDING
+  PREPARATION
+  SCREEN_PREP
+  PRINTING
+  DRYING
+  QUALITY_CHECK
+  PACKAGING
+  COMPLETED
+  ON_HOLD
+}
+
+model ProductionItem {
+  id                  Int       @id @default(autoincrement())
+  productionOrderId   Int       @map("production_order_id")
+  orderItemId         Int       @map("order_item_id")
+  status              ItemProductionStatus @default(PENDING)
+  quantityCompleted   Int       @default(0) @map("quantity_completed")
+  notes               String?
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  productionOrder     ProductionOrder @relation(fields: [productionOrderId], references: [id])
+  orderItem           OrderItem       @relation(fields: [orderItemId], references: [id])
+
+  @@map("production_items")
+}
+
+enum ItemProductionStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  DEFECTIVE
+}
+
+// STOCK & MATÉRIAUX
+model Material {
+  id                  Int       @id @default(autoincrement())
+  name                String
+  category            MaterialCategory
+  unit                String
+  currentStock        Float     @default(0) @map("current_stock")
+  minStock            Float     @default(10) @map("min_stock")
+  unitPrice           Float     @map("unit_price")
+  supplier            String?
+  supplierContact     String?   @map("supplier_contact")
+  lastRestockDate     DateTime? @map("last_restock_date")
+  storageLocation     String?   @map("storage_location")
+  notes               String?
+  isActive            Boolean   @default(true) @map("is_active")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  usages              MaterialUsage[]
+
+  @@map("materials")
+}
+
+enum MaterialCategory {
+  INK
+  SCREEN
+  EMULSION
+  TEXTILE
+  CHEMICAL
+  PACKAGING
+  OTHER
+}
+
+model MaterialUsage {
+  id                  Int       @id @default(autoincrement())
+  productionOrderId   Int       @map("production_order_id")
+  materialId          Int       @map("material_id")
+  quantityUsed        Float     @map("quantity_used")
+  unitCost            Float     @map("unit_cost")
+  usageDate           DateTime  @default(now()) @map("usage_date")
+  notes               String?
+
+  // Relations
+  productionOrder     ProductionOrder @relation(fields: [productionOrderId], references: [id])
+  material            Material        @relation(fields: [materialId], references: [id])
+
+  @@map("material_usages")
+}
+
+// FINANCES
+model Payment {
+  id                  Int         @id @default(autoincrement())
+  orderId             Int         @map("order_id")
+  amount              Float
+  paymentMethod       PaymentMethod @map("payment_method")
+  transactionId       String?     @map("transaction_id")
+  status              PaymentStatus @default(PENDING)
+  paymentDate         DateTime?   @map("payment_date")
+  notes               String?
+  createdAt           DateTime    @default(now()) @map("created_at")
+
+  // Relations
+  order               Order       @relation(fields: [orderId], references: [id])
+
+  @@map("payments")
+}
+
+enum PaymentMethod {
+  CASH
+  MOBILE_MONEY
+  BANK_TRANSFER
+  CHEQUE
+  CREDIT_CARD
+}
+
+enum PaymentStatus {
+  PENDING
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+// DEVIS
+model Quotation {
+  id                  Int         @id @default(autoincrement())
+  quotationNumber     String      @unique @map("quotation_number")
+  clientId            Int         @map("client_id")
+  status              QuotationStatus @default(DRAFT)
+  totalAmount         Float       @map("total_amount")
+  validityDays        Int         @default(30) @map("validity_days")
+  notes               String?
+  termsConditions     String?     @map("terms_conditions")
+  sentDate            DateTime?   @map("sent_date")
+  acceptedDate        DateTime?   @map("accepted_date")
+  createdAt           DateTime    @default(now()) @map("created_at")
+  updatedAt           DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  client              Client      @relation(fields: [clientId], references: [id])
+  items               QuotationItem[]
+
+  @@map("quotations")
+}
+
+enum QuotationStatus {
+  DRAFT
+  SENT
+  VIEWED
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
+model QuotationItem {
+  id                  Int       @id @default(autoincrement())
+  quotationId         Int       @map("quotation_id")
+  description         String
+  quantity            Int
+  unitPrice           Float     @map("unit_price")
+  notes               String?
+  createdAt           DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  quotation           Quotation @relation(fields: [quotationId], references: [id])
+
+  @@map("quotation_items")
+}
+
+// FICHIERS
+model ClientFile {
+  id                  Int       @id @default(autoincrement())
+  clientId            Int       @map("client_id")
+  filename            String
+  fileUrl             String    @map("file_url")
+  fileType            FileType  @map("file_type")
+  size                Int
+  uploadedBy          Int       @map("uploaded_by")
+  notes               String?
+  createdAt           DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  client              Client    @relation(fields: [clientId], references: [id])
+  uploader            User      @relation(fields: [uploadedBy], references: [id])
+
+  @@map("client_files")
+}
+
+enum FileType {
+  DESIGN
+  LOGO
+  CONTRACT
+  INVOICE
+  PHOTO
+  OTHER
+}
+
+// ACTIVITÉS & LOGS
+model UserActivity {
+  id                  Int       @id @default(autoincrement())
+  userId              Int       @map("user_id")
+  activityType        String    @map("activity_type")
+  description         String
+  ipAddress           String?   @map("ip_address")
+  userAgent           String?   @map("user_agent")
+  metadata            Json?
+  createdAt           DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  user                User      @relation(fields: [userId], references: [id])
+
+  @@map("user_activities")
+}
+
+model Log {
+  id                  Int       @id @default(autoincrement())
+  level               LogLevel  @default(INFO)
+  message             String
+  source              String?
+  userId              Int?      @map("user_id")
+  metadata            Json?
+  createdAt           DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  user                User?     @relation(fields: [userId], references: [id])
+
+  @@map("logs")
+}
+
+enum LogLevel {
+  ERROR
+  WARN
+  INFO
+  DEBUG
+}
+
+model OrderTimeline {
+  id                  Int       @id @default(autoincrement())
+  orderId             Int       @map("order_id")
+  eventType           String    @map("event_type")
+  description         String
+  createdBy           Int?      @map("created_by")
+  metadata            Json?
+  createdAt           DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  order               Order     @relation(fields: [orderId], references: [id])
+  creator             User?     @relation(fields: [createdBy], references: [id])
+
+  @@map("order_timeline")
+}
+
+model ClientInteraction {
+  id                  Int       @id @default(autoincrement())
+  clientId            Int       @map("client_id")
+  userId              Int       @map("user_id")
+  interactionType     String    @map("interaction_type")
+  notes               String
+  followUpDate        DateTime? @map("follow_up_date")
+  followUpDone        Boolean   @default(false) @map("follow_up_done")
+  createdAt           DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  client              Client    @relation(fields: [clientId], references: [id])
+  user                User      @relation(fields: [userId], references: [id])
+
+  @@map("client_interactions")
+}
+
+// TÂCHES
+model Task {
+  id                  Int         @id @default(autoincrement())
+  title               String
+  description         String?
+  assignedTo          Int         @map("assigned_to")
+  createdBy           Int         @map("created_by")
+  priority            Priority    @default(MEDIUM)
+  status              TaskStatus  @default(PENDING)
+  dueDate             DateTime?   @map("due_date")
+  completedAt         DateTime?   @map("completed_at")
+  category            TaskCategory
+  orderId             Int?        @map("order_id")
+  notes               String?
+  createdAt           DateTime    @default(now()) @map("created_at")
+  updatedAt           DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  assignee            User        @relation("AssignedTasks", fields: [assignedTo], references: [id])
+  creator             User        @relation("CreatedTasks", fields: [createdBy], references: [id])
+  order               Order?      @relation(fields: [orderId], references: [id])
+
+  @@map("tasks")
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  ON_HOLD
+}
+
+enum TaskCategory {
+  PRODUCTION
+  ADMINISTRATIVE
+  CLIENT
+  MAINTENANCE
+  MEETING
+  OTHER
+}

@@ -1,0 +1,70 @@
+<!-- frontend/public/test-images.html -->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Test des Images</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .image-container { margin: 20px 0; border: 1px solid #ccc; padding: 10px; }
+        img { max-width: 200px; max-height: 200px; margin: 10px; border: 1px solid #ddd; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>Test des URLs d'images</h1>
+    
+    <div id="images"></div>
+    
+    <script>
+        const API_URL = 'https://bygagoos-ink-backend.vercel.app';
+        const PUBLIC_URL = API_URL + '/public';
+        
+        const testImages = [
+            { name: 'Tovoniaina', path: '/profiles/tovoniaina.jpg' },
+            { name: 'Volatiana', path: '/profiles/volatiana.jpg' },
+            { name: 'Miantsatiana', path: '/profiles/miantsatiana.jpg' },
+            { name: 'Faniry', path: '/profiles/tia-faniry.jpg' },
+            { name: 'Logo', path: '/images/logo.png' }
+        ];
+        
+        const container = document.getElementById('images');
+        
+        testImages.forEach(image => {
+            const imgUrl = PUBLIC_URL + image.path;
+            const div = document.createElement('div');
+            div.className = 'image-container';
+            
+            div.innerHTML = `
+                <h3>${image.name}</h3>
+                <p>URL: <code>${imgUrl}</code></p>
+                <img src="${imgUrl}" alt="${image.name}" onload="this.parentElement.classList.add('success')" onerror="this.parentElement.classList.add('error')">
+                <p>Statut: <span id="status-${image.name.toLowerCase()}">Chargement...</span></p>
+            `;
+            
+            container.appendChild(div);
+            
+            // Tester avec fetch
+            fetch(imgUrl)
+                .then(response => {
+                    const status = document.getElementById(`status-${image.name.toLowerCase()}`);
+                    if (response.ok) {
+                        status.textContent = '✅ Disponible';
+                        status.className = 'success';
+                    } else {
+                        status.textContent = `❌ Erreur ${response.status}`;
+                        status.className = 'error';
+                    }
+                })
+                .catch(error => {
+                    const status = document.getElementById(`status-${image.name.toLowerCase()}`);
+                    status.textContent = '❌ Erreur réseau';
+                    status.className = 'error';
+                });
+        });
+        
+        console.log('Base URL:', PUBLIC_URL);
+    </script>
+</body>
+</html>
