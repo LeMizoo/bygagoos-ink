@@ -2,22 +2,20 @@
   "version": 2,
   "builds": [
     {
-      "src": "app.js",
-      "use": "@vercel/node"
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
     }
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "app.js"
+      "handle": "filesystem"
     },
     {
       "src": "/(.*)",
-      "dest": "app.js"
+      "dest": "/index.html"
     }
-  ],
-  "env": {
-    "NODE_ENV": "production",
-    "DATABASE_URL": "file:./prisma/dev.db"
-  }
+  ]
 }
