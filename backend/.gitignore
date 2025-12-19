@@ -35,3 +35,5 @@ public/images/profiles/*.svg
 public/images/logo.svg
 !public/images/profiles/.gitkeep
 !public/images/.gitkeep
+.vercel
+.env*.local

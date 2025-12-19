@@ -1,4 +1,4 @@
-// backend/server.js - SERVEUR PRINCIPAL COMPLET
+// backend/server.js - SERVEUR PRINCIPAL COMPLET (VERSION RÉSEAU)
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -6,42 +6,67 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 const app = express();
-const PORT = process.env.PORT || 3001; // CHANGÉ DE 3002 À 3001
+const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || 'bygagoos-dev-secret-2025';
 
 // ======================
-// CONFIGURATION CORS POUR VERCEL
+// CONFIGURATION CORS POUR RÉSEAU LOCAL ET VERCEL
 // ======================
 const allowedOrigins = [
+  // Localhost développement
   'http://localhost:5173',
   'http://localhost:3000',
+  
+  // Vercel déploiements
   'https://bygagoos-ink.vercel.app',
   'https://bygagoos-ink-*.vercel.app',
-  'https://bygagoos-ink-git-*.vercel.app'
+  'https://bygagoos-ink-git-*.vercel.app',
+  
+  // ADRESSES RÉSEAU LOCAL - FRONTEND
+  'http://192.168.88.11:5173',
+  'http://172.29.240.1:5173',
+  'http://172.23.240.1:5173',
+  
+  // ADRESSES RÉSEAU LOCAL - BACKEND (pour accès direct)
+  'http://192.168.88.11:3001',
+  'http://172.29.240.1:3001',
+  'http://172.23.240.1:3001',
+  
+  // Autoriser toutes les adresses du réseau local (pour tests)
+  /^http:\/\/192\.168\.\d+\.\d+:\d+$/,
+  /^http:\/\/172\.\d+\.\d+\.\d+:\d+$/,
+  /^http:\/\/10\.\d+\.\d+\.\d+:\d+$/
 ];
 
 const corsOptions = {
   origin: function (origin, callback) {
-    // Autoriser les requêtes sans origine (curl, postman, apps mobiles, etc.)
+    // Autoriser les requêtes sans origine (curl, postman, apps mobiles, serveur à serveur)
     if (!origin) return callback(null, true);
     
     // Vérifier si l'origine est dans la liste autorisée
     const isAllowed = allowedOrigins.some(allowed => {
-      // Gérer les wildcards (*.vercel.app)
-      const pattern = allowed.replace('*', '.*');
-      return new RegExp(pattern).test(origin);
+      if (typeof allowed === 'string') {
+        // Gérer les wildcards (*.vercel.app)
+        const pattern = allowed.replace(/\*/g, '.*');
+        return new RegExp(pattern).test(origin);
+      } else if (allowed instanceof RegExp) {
+        // Vérifier les regex
+        return allowed.test(origin);
+      }
+      return false;
     });
     
     if (isAllowed) {
       callback(null, true);
     } else {
-      console.log('🚫 CORS blocked for origin:', origin);
-      console.log('✅ Allowed origins:', allowedOrigins);
+      console.log('🚫 CORS bloqué pour origine:', origin);
+      console.log('📋 Origines autorisées:', 
+        allowedOrigins.filter(o => typeof o === 'string').join(', '));
       callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH', 'HEAD'],
   allowedHeaders: [
     'Content-Type',
     'Authorization',
@@ -49,9 +74,15 @@ const corsOptions = {
     'Accept',
     'Origin',
     'Access-Control-Request-Method',
-    'Access-Control-Request-Headers'
+    'Access-Control-Request-Headers',
+    'X-Auth-Token'
   ],
-  exposedHeaders: ['Content-Length', 'Authorization'],
+  exposedHeaders: [
+    'Content-Length',
+    'Authorization',
+    'X-Total-Count',
+    'X-Request-ID'
+  ],
   maxAge: 86400, // Cache preflight pendant 24h
   preflightContinue: false,
   optionsSuccessStatus: 204
@@ -66,11 +97,14 @@ app.options('*', cors(corsOptions));
 // ======================
 // MIDDLEWARE
 // ======================
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Middleware pour logger les requêtes
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.url} - Origin: ${req.headers.origin || 'none'}`);
+  const timestamp = new Date().toISOString();
+  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+  console.log(`🌐 ${timestamp} - ${req.method} ${req.url} - Origin: ${req.headers.origin || 'none'} - IP: ${ip}`);
   next();
 });
 
@@ -82,16 +116,18 @@ const authenticateToken = (req, res, next) => {
   if (!token) {
     return res.status(401).json({ 
       success: false,
-      message: 'Token manquant' 
+      message: 'Token manquant',
+      code: 'TOKEN_REQUIRED'
     });
   }
 
   jwt.verify(token, JWT_SECRET, (err, user) => {
     if (err) {
-      console.log('Token verification failed:', err.message);
+      console.log('❌ Token verification failed:', err.message);
       return res.status(403).json({ 
         success: false,
-        message: 'Token invalide ou expiré' 
+        message: 'Token invalide ou expiré',
+        code: 'TOKEN_INVALID'
       });
     }
     req.user = user;
@@ -114,7 +150,8 @@ let users = [
     title: 'Fondateur & Structure',
     phone: '+261 34 43 593 30',
     password: bcrypt.hashSync('ByGagoos2025!', 10),
-    createdAt: new Date('2025-01-01')
+    createdAt: new Date('2025-01-01'),
+    profileImage: 'tovoniaina.jpg'
   },
   {
     id: '2',
@@ -127,7 +164,8 @@ let users = [
     title: 'Inspiration & Créativité',
     phone: '+261 34 43 359 30',
     password: bcrypt.hashSync('ByGagoos2025!', 10),
-    createdAt: new Date('2025-01-01')
+    createdAt: new Date('2025-01-01'),
+    profileImage: 'volatiana.jpg'
   },
   {
     id: '3',
@@ -140,7 +178,8 @@ let users = [
     title: 'Opérations & Design',
     phone: '+261 34 75 301 07',
     password: bcrypt.hashSync('ByGagoos2025!', 10),
-    createdAt: new Date('2025-01-01')
+    createdAt: new Date('2025-01-01'),
+    profileImage: 'miantsatiana.jpg'
   },
   {
     id: '4',
@@ -153,7 +192,8 @@ let users = [
     title: 'Admin & Communication',
     phone: '+261 38 44 993 77',
     password: bcrypt.hashSync('ByGagoos2025!', 10),
-    createdAt: new Date('2025-01-01')
+    createdAt: new Date('2025-01-01'),
+    profileImage: 'tia-faniry.jpg'
   }
 ];
 
@@ -162,13 +202,32 @@ let users = [
 const path = require('path');
 
 // Servir les fichiers statiques du dossier public
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), {
+  maxAge: '1d',
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.svg')) {
+      res.setHeader('Content-Type', 'image/svg+xml');
+    }
+  }
+}));
 
 // Routes spécifiques pour les dossiers
-app.use('/profiles', express.static(path.join(__dirname, 'public/profiles')));
-app.use('/production', express.static(path.join(__dirname, 'public/production')));
-app.use('/images', express.static(path.join(__dirname, 'public/images')));
-app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
+app.use('/profiles', express.static(path.join(__dirname, 'public/profiles'), {
+  maxAge: '7d',
+  index: false
+}));
+
+app.use('/production', express.static(path.join(__dirname, 'public/production'), {
+  maxAge: '7d'
+}));
+
+app.use('/images', express.static(path.join(__dirname, 'public/images'), {
+  maxAge: '7d'
+}));
+
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads'), {
+  maxAge: '7d'
+}));
 
 // Route pour vérifier les fichiers statiques
 app.get('/api/public/*', (req, res) => {
@@ -177,7 +236,11 @@ app.get('/api/public/*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', filePath), (err) => {
     if (err) {
       console.log(`❌ Static file not found: ${filePath}`);
-      res.status(404).json({ error: 'File not found', path: filePath });
+      res.status(404).json({ 
+        success: false,
+        error: 'File not found',
+        path: filePath 
+      });
     }
   });
 });
@@ -187,24 +250,35 @@ app.get('/api/public/*', (req, res) => {
 // GET / - Root endpoint
 app.get('/', (req, res) => {
   res.json({
+    success: true,
     message: '🎨 ByGagoos Ink API - Sérigraphie Textile',
     version: '1.0.0',
-    environment: process.env.NODE_ENV,
+    environment: process.env.NODE_ENV || 'development',
     timestamp: new Date().toISOString(),
+    network: {
+      host: req.hostname,
+      ip: req.ip,
+      protocol: req.protocol
+    },
     cors: {
       enabled: true,
-      allowedOrigins: allowedOrigins
+      allowedOrigins: allowedOrigins.filter(o => typeof o === 'string')
     },
     endpoints: {
       root: 'GET /',
       health: 'GET /api/health',
       login: 'POST /api/auth/login',
       verify: 'GET /api/auth/verify',
+      me: 'GET /api/auth/me',
       family: 'GET /api/family',
       familyMembers: 'GET /api/family/members',
       dashboard: 'GET /api/dashboard/stats',
       orders: 'GET /api/orders',
       docs: 'https://github.com/LeMizoo/bygagoos-ink'
+    },
+    stats: {
+      users: users.length,
+      uptime: process.uptime()
     }
   });
 });
@@ -219,14 +293,28 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
     uptime: process.uptime(),
+    memory: process.memoryUsage(),
+    network: {
+      host: req.hostname,
+      origin: req.headers.origin || 'none',
+      clientIp: req.ip
+    },
     cors: {
       enabled: true,
-      allowedOrigins: allowedOrigins,
-      requestOrigin: req.headers.origin || 'none'
+      allowedOrigins: allowedOrigins.filter(o => typeof o === 'string'),
+      requestOrigin: req.headers.origin || 'none',
+      allowed: allowedOrigins.some(o => {
+        if (typeof o === 'string') {
+          const pattern = o.replace(/\*/g, '.*');
+          return new RegExp(pattern).test(req.headers.origin || '');
+        }
+        return false;
+      })
     },
-    headers: {
-      origin: req.headers.origin,
-      'access-control-allow-origin': req.headers.origin && allowedOrigins.some(o => o.includes(req.headers.origin)) ? req.headers.origin : 'not-allowed'
+    api: {
+      totalRoutes: 10,
+      authRoutes: 3,
+      dataRoutes: 4
     }
   });
 });
@@ -239,25 +327,30 @@ app.post('/api/auth/login', async (req, res) => {
     if (!email || !password) {
       return res.status(400).json({ 
         success: false,
-        message: 'Email et mot de passe requis' 
+        message: 'Email et mot de passe requis',
+        code: 'CREDENTIALS_REQUIRED'
       });
     }
 
     // Find user
-    const user = users.find(u => u.email === email);
+    const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
     if (!user) {
+      console.log(`❌ Login échoué: email non trouvé - ${email}`);
       return res.status(401).json({ 
         success: false,
-        message: 'Identifiants incorrects' 
+        message: 'Identifiants incorrects',
+        code: 'INVALID_CREDENTIALS'
       });
     }
 
     // Verify password
     const passwordValid = await bcrypt.compare(password, user.password);
     if (!passwordValid) {
+      console.log(`❌ Login échoué: mot de passe incorrect - ${email}`);
       return res.status(401).json({ 
         success: false,
-        message: 'Identifiants incorrects' 
+        message: 'Identifiants incorrects',
+        code: 'INVALID_CREDENTIALS'
       });
     }
 
@@ -267,11 +360,14 @@ app.post('/api/auth/login', async (req, res) => {
         userId: user.id, 
         email: user.email, 
         role: user.role,
-        familyRole: user.familyRole 
+        familyRole: user.familyRole,
+        name: user.name
       },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
+
+    console.log(`✅ Login réussi: ${user.name} (${user.role})`);
 
     res.json({
       success: true,
@@ -285,16 +381,21 @@ app.post('/api/auth/login', async (req, res) => {
         role: user.role,
         familyRole: user.familyRole,
         title: user.title,
-        phone: user.phone
+        phone: user.phone,
+        profileImage: user.profileImage,
+        createdAt: user.createdAt
       },
-      message: 'Connexion réussie'
+      message: 'Connexion réussie',
+      expiresIn: 7 * 24 * 60 * 60 // 7 jours en secondes
     });
 
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('🔥 Login error:', error);
     res.status(500).json({ 
       success: false,
-      message: 'Erreur serveur' 
+      message: 'Erreur serveur lors de la connexion',
+      code: 'SERVER_ERROR',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
@@ -302,33 +403,67 @@ app.post('/api/auth/login', async (req, res) => {
 // GET /api/auth/verify - Verify token
 app.get('/api/auth/verify', authenticateToken, (req, res) => {
   res.json({
+    success: true,
     valid: true,
-    user: req.user
+    user: req.user,
+    message: 'Token valide'
   });
+});
+
+// GET /api/auth/me - Get current user profile (compatible avec frontend)
+app.get('/api/auth/me', authenticateToken, (req, res) => {
+  try {
+    const user = users.find(u => u.id === req.user.userId);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Utilisateur non trouvé',
+        code: 'USER_NOT_FOUND'
+      });
+    }
+    
+    // Ne pas renvoyer le mot de passe
+    const { password, ...userWithoutPassword } = user;
+    
+    res.json({
+      success: true,
+      user: userWithoutPassword,
+      tokenInfo: {
+        issuedAt: req.user.iat,
+        expiresAt: req.user.exp,
+        issuedTo: req.user.email
+      }
+    });
+  } catch (error) {
+    console.error('🔥 Get user profile error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur serveur lors de la récupération du profil',
+      code: 'SERVER_ERROR'
+    });
+  }
 });
 
 // GET /api/family - Get all family members (compatible avec app.js)
 app.get('/api/family', (req, res) => {
   try {
     const members = users.map(user => {
-      return {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        phone: user.phone,
-        role: user.role,
-        familyRole: user.familyRole,
-        createdAt: user.createdAt
-      };
+      const { password, ...userWithoutPassword } = user;
+      return userWithoutPassword;
     });
 
-    res.json(members);
+    res.json({
+      success: true,
+      count: members.length,
+      members
+    });
   } catch (error) {
-    console.error('Error fetching family:', error);
+    console.error('🔥 Error fetching family:', error);
     res.status(500).json({ 
       success: false,
-      message: 'Erreur serveur' 
+      message: 'Erreur serveur',
+      code: 'SERVER_ERROR'
     });
   }
 });
@@ -344,12 +479,14 @@ app.get('/api/family/members', (req, res) => {
       familyRole: user.familyRole,
       title: user.title,
       phone: user.phone,
+      profileImage: user.profileImage,
       color: user.familyRole === 'STRUCTURE' ? '#2E7D32' : 
              user.familyRole === 'INSPIRATION_CREATIVITY' ? '#9C27B0' : 
              user.familyRole === 'OPERATIONS_DESIGN' ? '#FF9800' : '#2196F3',
       emoji: user.familyRole === 'STRUCTURE' ? '🏗️' : 
              user.familyRole === 'INSPIRATION_CREATIVITY' ? '✨' : 
-             user.familyRole === 'OPERATIONS_DESIGN' ? '🎨' : '📞'
+             user.familyRole === 'OPERATIONS_DESIGN' ? '🎨' : '📞',
+      joined: user.createdAt
     };
   });
 
@@ -371,18 +508,25 @@ app.get('/api/dashboard/stats', authenticateToken, (req, res) => {
       upcomingEvents: 2,
       totalDocuments: 15,
       completionRate: 75,
-      revenue: 1250000
+      revenue: 1250000,
+      recentActivity: [
+        { user: 'Tovoniaina', action: 'Nouveau client', time: '2h' },
+        { user: 'Volatiana', action: 'Design approuvé', time: '4h' },
+        { user: 'Miantsatiana', action: 'Commande expédiée', time: '1j' }
+      ]
     };
     
     res.json({
       success: true,
-      stats
+      stats,
+      updatedAt: new Date().toISOString()
     });
   } catch (error) {
-    console.error('Stats error:', error);
+    console.error('🔥 Stats error:', error);
     res.status(500).json({ 
       success: false, 
-      message: 'Erreur serveur' 
+      message: 'Erreur serveur',
+      code: 'SERVER_ERROR'
     });
   }
 });
@@ -391,9 +535,10 @@ app.get('/api/dashboard/stats', authenticateToken, (req, res) => {
 app.get('/api/orders', authenticateToken, (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 5;
+    const page = parseInt(req.query.page) || 1;
     
     // Données fictives pour le développement
-    const orders = [
+    const allOrders = [
       {
         id: 'CMD-001',
         clientName: 'Client Entreprise A',
@@ -401,7 +546,8 @@ app.get('/api/orders', authenticateToken, (req, res) => {
         totalQty: 10,
         unitPrice: 5000,
         totalPrice: 50000,
-        status: 'En cours'
+        status: 'En cours',
+        priority: 'Haute'
       },
       {
         id: 'CMD-002',
@@ -410,7 +556,8 @@ app.get('/api/orders', authenticateToken, (req, res) => {
         totalQty: 5,
         unitPrice: 8000,
         totalPrice: 40000,
-        status: 'Terminé'
+        status: 'Terminé',
+        priority: 'Moyenne'
       },
       {
         id: 'CMD-003',
@@ -419,7 +566,8 @@ app.get('/api/orders', authenticateToken, (req, res) => {
         totalQty: 8,
         unitPrice: 6500,
         totalPrice: 52000,
-        status: 'En cours'
+        status: 'En cours',
+        priority: 'Basse'
       },
       {
         id: 'CMD-004',
@@ -428,7 +576,8 @@ app.get('/api/orders', authenticateToken, (req, res) => {
         totalQty: 15,
         unitPrice: 3000,
         totalPrice: 45000,
-        status: 'Terminé'
+        status: 'Terminé',
+        priority: 'Moyenne'
       },
       {
         id: 'CMD-005',
@@ -437,22 +586,58 @@ app.get('/api/orders', authenticateToken, (req, res) => {
         totalQty: 3,
         unitPrice: 12000,
         totalPrice: 36000,
-        status: 'En attente'
+        status: 'En attente',
+        priority: 'Haute'
       }
-    ].slice(0, limit);
+    ];
+    
+    const startIndex = (page - 1) * limit;
+    const paginatedOrders = allOrders.slice(startIndex, startIndex + limit);
     
     res.json({
       success: true,
-      count: orders.length,
-      orders
+      count: paginatedOrders.length,
+      total: allOrders.length,
+      page,
+      totalPages: Math.ceil(allOrders.length / limit),
+      orders: paginatedOrders
     });
   } catch (error) {
-    console.error('Orders error:', error);
+    console.error('🔥 Orders error:', error);
     res.status(500).json({ 
       success: false, 
-      message: 'Erreur serveur' 
+      message: 'Erreur serveur',
+      code: 'SERVER_ERROR'
     });
   }
+});
+
+// GET /api/network/test - Test réseau
+app.get('/api/network/test', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Test réseau réussi',
+    networkInfo: {
+      yourIp: req.ip,
+      hostname: req.hostname,
+      origin: req.headers.origin || 'none',
+      protocol: req.protocol,
+      method: req.method,
+      timestamp: new Date().toISOString()
+    },
+    serverInfo: {
+      port: PORT,
+      environment: process.env.NODE_ENV || 'development',
+      nodeVersion: process.version,
+      platform: process.platform
+    },
+    accessibleFrom: [
+      `http://localhost:${PORT}`,
+      `http://192.168.88.11:${PORT}`,
+      `http://172.29.240.1:${PORT}`,
+      `http://172.23.240.1:${PORT}`
+    ]
+  });
 });
 
 // ======================
@@ -470,13 +655,20 @@ app.use('*', (req, res) => {
     availableRoutes: {
       root: 'GET /',
       health: 'GET /api/health',
+      networkTest: 'GET /api/network/test',
       login: 'POST /api/auth/login',
       verify: 'GET /api/auth/verify',
+      me: 'GET /api/auth/me',
       family: 'GET /api/family',
       familyMembers: 'GET /api/family/members',
       dashboard: 'GET /api/dashboard/stats',
       orders: 'GET /api/orders'
-    }
+    },
+    suggestions: [
+      'Vérifiez l\'URL',
+      'Vérifiez la méthode HTTP (GET, POST, etc.)',
+      'Consultez la documentation à la racine /'
+    ]
   });
 });
 
@@ -484,10 +676,11 @@ app.use('*', (req, res) => {
 app.use((err, req, res, next) => {
   console.error('🔥 Server error:', {
     message: err.message,
-    stack: err.stack,
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
     url: req.url,
     method: req.method,
-    origin: req.headers.origin
+    origin: req.headers.origin,
+    ip: req.ip
   });
   
   // Erreur CORS spécifique
@@ -495,9 +688,11 @@ app.use((err, req, res, next) => {
     return res.status(403).json({
       success: false,
       message: 'Accès interdit par la politique CORS',
-      allowedOrigins: allowedOrigins,
+      code: 'CORS_ERROR',
       yourOrigin: req.headers.origin || 'non spécifiée',
-      timestamp: new Date().toISOString()
+      allowedOrigins: allowedOrigins.filter(o => typeof o === 'string'),
+      timestamp: new Date().toISOString(),
+      suggestion: 'Contactez l\'administrateur pour ajouter votre domaine'
     });
   }
   
@@ -505,7 +700,18 @@ app.use((err, req, res, next) => {
   if (err.name === 'JsonWebTokenError') {
     return res.status(401).json({
       success: false,
-      message: 'Token d\'authentification invalide'
+      message: 'Token d\'authentification invalide',
+      code: 'JWT_ERROR'
+    });
+  }
+  
+  // Erreur JWT expiration
+  if (err.name === 'TokenExpiredError') {
+    return res.status(401).json({
+      success: false,
+      message: 'Token expiré',
+      code: 'TOKEN_EXPIRED',
+      suggestion: 'Veuillez vous reconnecter'
     });
   }
   
@@ -513,35 +719,62 @@ app.use((err, req, res, next) => {
   res.status(500).json({
     success: false,
     message: 'Erreur interne du serveur',
+    code: 'INTERNAL_ERROR',
     error: process.env.NODE_ENV === 'development' ? err.message : undefined,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    requestId: req.headers['x-request-id'] || Date.now().toString()
   });
 });
 
 // ======================
-// DÉMARRAGE SERVEUR
+// DÉMARRAGE SERVEUR (ÉCOUTE SUR TOUTES LES INTERFACES)
 // ======================
 if (process.env.NODE_ENV !== 'test') {
-  app.listen(PORT, () => {
+  app.listen(PORT, '0.0.0.0', () => {
     console.log(`
-╔══════════════════════════════════════════════════════════════════╗
-║                    BYGAGOOS INK API SERVER                       ║
-║                     Version: 1.0.0                               ║
-║                     Env: ${process.env.NODE_ENV || 'development'}                     ║
-║                     Port: ${PORT}                                    ║
-╚══════════════════════════════════════════════════════════════════╝
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                         BYGAGOOS INK API SERVER                                ║
+║                               Version: 1.0.0                                   ║
+║                         Env: ${(process.env.NODE_ENV || 'development').padEnd(20)} ║
+║                         Port: ${PORT} (écoute sur toutes interfaces)             ║
+╚════════════════════════════════════════════════════════════════════════════════╝
     `);
-    console.log(`✅ Serveur démarré sur http://localhost:${PORT}`);
-    console.log(`🩺 API Health: http://localhost:${PORT}/api/health`);
-    console.log(`🔐 Login: POST http://localhost:${PORT}/api/auth/login`);
-    console.log(`👨‍👩‍👧‍👦 Famille: http://localhost:${PORT}/api/family`);
+    
+    console.log(`✅ Serveur démarré sur toutes les interfaces:`);
+    console.log(`   • http://localhost:${PORT}`);
+    console.log(`   • http://192.168.88.11:${PORT}`);
+    console.log(`   • http://172.29.240.1:${PORT}`);
+    console.log(`   • http://172.23.240.1:${PORT}`);
+    console.log(`   • http://[VOTRE-IP-LOCALE]:${PORT}`);
+    
+    console.log(`\n🔗 Endpoints principaux:`);
+    console.log(`   🩺 Health: GET http://localhost:${PORT}/api/health`);
+    console.log(`   🌐 Network Test: GET http://localhost:${PORT}/api/network/test`);
+    console.log(`   🔐 Login: POST http://localhost:${PORT}/api/auth/login`);
+    console.log(`   👤 User Profile: GET http://localhost:${PORT}/api/auth/me`);
+    console.log(`   👨‍👩‍👧‍👦 Famille: GET http://localhost:${PORT}/api/family`);
+    
     console.log(`\n📋 ${users.length} utilisateurs configurés:`);
     users.forEach(user => {
-      console.log(`   • ${user.email} - ${user.role} (${user.familyRole})`);
+      console.log(`   • ${user.email.padEnd(45)} - ${user.role.padEnd(12)} (${user.familyRole})`);
     });
+    
     console.log(`\n🔑 Mot de passe par défaut: ByGagoos2025!`);
-    console.log(`\n🌐 CORS configuré pour ${allowedOrigins.length} origines`);
-    allowedOrigins.forEach(origin => console.log(`   • ${origin}`));
+    
+    console.log(`\n🌐 CORS configuré pour ${allowedOrigins.length} origines/règles`);
+    console.log(`🌐 **ACCÈS RÉSEAU ACTIVÉ** - Prêt pour tests équipe familiale`);
+    
+    console.log(`\n🚀 **URLs de test pour l'équipe familiale:**`);
+    console.log(`   Frontend: http://192.168.88.11:5173`);
+    console.log(`   Backend API: http://192.168.88.11:3001/api/health`);
+    console.log(`   Backend API: http://172.29.240.1:3001/api/health`);
+    console.log(`   Backend API: http://172.23.240.1:3001/api/health`);
+    
+    console.log(`\n📝 **Pour tester depuis une autre machine:**`);
+    console.log(`   1. Assurez-vous d'être sur le même réseau Wi-Fi`);
+    console.log(`   2. Ouvrez http://192.168.88.11:5173 dans votre navigateur`);
+    console.log(`   3. Connectez-vous avec vos identifiants`);
+    console.log(`\n📊 Test réseau: curl http://192.168.88.11:3001/api/network/test`);
   });
 }
 
