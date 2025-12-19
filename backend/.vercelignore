@@ -1,0 +1,14 @@
+node_modules
+logs
+uploads
+*.db
+*.sqlite
+*.bat
+*.sh
+Dockerfile*
+docker-compose*
+.env*
+backup/
+prisma/dev.db
+prisma/prisma/
+public/uploads/
