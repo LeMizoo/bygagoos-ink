@@ -65,7 +65,7 @@ echo    PGAdmin        : http://localhost:5050 (admin@bygagoos.com/password)
 echo.
 echo 🔐 IDENTIFIANTS DE TEST :
 echo    Email    : tovoniaina.rahendrison@gmail.com
-echo    Password : ByGagoos2025!
+echo    Default password: configure via environment variable DEFAULT_PASSWORD (not committed)
 
 echo.
 echo 🐳 ÉTAT DOCKER : docker ps --filter name=bygagoos
@@ -97,7 +97,7 @@ echo 🌐 URLs :
 echo    Frontend : http://localhost:5173
 echo    Backend  : http://localhost:3001
 echo.
-echo 🔐 IDENTIFIANTS : tovoniaina.rahendrison@gmail.com / ByGagoos2025!
+echo 🔐 IDENTIFIANTS : tovoniaina.rahendrison@gmail.com / (DEFAULT_PASSWORD in environment)
 
 :END
 echo.

@@ -1,4 +1,4 @@
-console.log('ÌæØ V√âRIFICATION FINALE BYGAGOOS-INK BACKEND');
+console.log('ÔøΩÔøΩÔøΩ V√âRIFICATION FINALE BYGAGOOS-INK BACKEND');
 console.log('============================================\n');
 
 const http = require('http');
@@ -6,7 +6,7 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 async function checkAll() {
-  console.log('1. Ì¥ç V√©rification des utilisateurs...');
+  console.log('1. ÔøΩÔøΩÔøΩ V√©rification des utilisateurs...');
   const users = await prisma.user.findMany({
     select: { email: true, name: true, role: true, familyRole: true }
   });
@@ -17,7 +17,7 @@ async function checkAll() {
     console.log(`      R√¥le: ${user.role} - ${user.familyRole}`);
   });
 
-  console.log('\n2. Ì∫Ä Test de l\'API...');
+  console.log('\n2. ÔøΩÔøΩÔøΩ Test de l\'API...');
   
   // Test API Health
   await new Promise((resolve) => {
@@ -53,7 +53,7 @@ async function checkAll() {
     });
   });
 
-  console.log('\n3. Ì≥ä R√âSUM√â FINAL:');
+  console.log('\n3. ÔøΩÔøΩÔøΩ R√âSUM√â FINAL:');
   console.log('   ------------------------------------');
   console.log('   ‚úÖ PostgreSQL Docker: Op√©rationnel');
   console.log('   ‚úÖ Backend API: Port 3001');
@@ -62,12 +62,12 @@ async function checkAll() {
   console.log('   ‚úÖ Prisma Client: G√©n√©r√©');
   console.log('   ------------------------------------');
   
-  console.log('\nÌæâ BACKEND BYGAGOOS-INK PR√äT POUR LA PRODUCTION !');
-  console.log('\nÌ¥ó URLs:');
-  console.log('   Ìºê API: http://localhost:3001');
-  console.log('   Ì∑ÑÔ∏è  PGAdmin: http://localhost:5050');
-  console.log('   Ì±ë Admin: tovoniaina.rahendrison@gmail.com');
-  console.log('   Ì¥ë Password: ByGagoos2025!');
+  console.log('\nÔøΩÔøΩÔøΩ BACKEND BYGAGOOS-INK PR√äT POUR LA PRODUCTION !');
+  console.log('\nÔøΩÔøΩÔøΩ URLs:');
+  console.log('   ÔøΩÔøΩÔøΩ API: http://localhost:3001');
+  console.log('   ÔøΩÔøΩÔøΩÔ∏è  PGAdmin: http://localhost:5050');
+  console.log('   ÔøΩÔøΩÔøΩ Admin: tovoniaina.rahendrison@gmail.com');
+  console.log('   ‚ö†Ô∏è Default password is not displayed. Set DEFAULT_PASSWORD in environment to configure seeded accounts.');
   
   await prisma.$disconnect();
 }

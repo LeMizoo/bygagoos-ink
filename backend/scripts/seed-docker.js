@@ -1,14 +1,15 @@
-// backend/scripts/seed-docker.js - VERSION CORRIGÉE
+// backend/scripts/seed-docker.js - VERSION SÉCURISÉE
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 
 const prisma = new PrismaClient();
+const DEFAULT_PASSWORD = process.env.DEFAULT_PASSWORD || 'changeme';
 
 async function seed() {
   console.log('🌱 Début du seed Docker...');
 
   try {
-    // CORRECTION: Pour PostgreSQL, utilisez DELETE au lieu de TRUNCATE
+    // Nettoyage des tables
     console.log('🧹 Nettoyage des tables...');
     await prisma.$executeRaw`DELETE FROM "users"`;
     await prisma.$executeRaw`DELETE FROM "family_members"`;
@@ -18,14 +19,14 @@ async function seed() {
     await prisma.$executeRaw`DELETE FROM "inventory"`;
 
     // Réinitialiser les séquences (PostgreSQL seulement)
-    await prisma.$executeRaw`ALTER SEQUENCE "users_id_seq" RESTART WITH 1`;
-    await prisma.$executeRaw`ALTER SEQUENCE "family_members_id_seq" RESTART WITH 1`;
+    await prisma.$executeRaw`ALTER SEQUENCE IF EXISTS "users_id_seq" RESTART WITH 1`;
+    await prisma.$executeRaw`ALTER SEQUENCE IF EXISTS "family_members_id_seq" RESTART WITH 1`;
 
     // Créer les utilisateurs
     const users = [
       {
         email: 'tovoniaina.rahendrison@gmail.com',
-        password: 'ByGagoos2025!',
+        password: DEFAULT_PASSWORD,
         name: 'Tovoniaina RAHENDRISON',
         role: 'SUPER_ADMIN',
         color: '#2E7D32',
@@ -33,7 +34,7 @@ async function seed() {
       },
       {
         email: 'dedettenadia@gmail.com',
-        password: 'ByGagoos2025!',
+        password: DEFAULT_PASSWORD,
         name: 'Volatiana RANDRIANARISOA',
         role: 'FAMILY_MEMBER',
         color: '#9C27B0',
@@ -41,7 +42,7 @@ async function seed() {
       },
       {
         email: 'miantsatianarahendrison@gmail.com',
-        password: 'ByGagoos2025!',
+        password: DEFAULT_PASSWORD,
         name: 'Miantsatiana RAHENDRISON',
         role: 'FAMILY_MEMBER',
         color: '#FF9800',
@@ -49,7 +50,7 @@ async function seed() {
       },
       {
         email: 'fanirytia17@gmail.com',
-        password: 'ByGagoos2025!',
+        password: DEFAULT_PASSWORD,
         name: 'Tia Faniry RAHENDRISON',
         role: 'FAMILY_MEMBER',
         color: '#2196F3',
@@ -71,16 +72,15 @@ async function seed() {
         }
       });
 
-      console.log(`✅ Utilisateur créé: ${user.name}`);
+      console.log(`✅ Utilisateur créé: ${user.email}`);
 
       // Créer aussi un membre de la famille pour cet utilisateur
       await prisma.familyMember.create({
         data: {
           userId: user.id,
           familyRole: 'Membre',
-          // CORRECTION: Utilisez des données Json valides
-          skills: JSON.stringify(['Leadership', 'Gestion']),
-          certifications: ['Diplôme 1', 'Certification 2'], // PostgreSQL supporte String[]
+          skills: ['Leadership', 'Gestion'], // Postgres text[]
+          certifications: ['Diplôme 1', 'Certification 2'],
           availability: JSON.stringify({ status: 'disponible', hours: '9h-18h' }),
           currentRole: userData.description?.split(' ')[1] || 'Membre'
         }
@@ -129,7 +129,7 @@ async function seed() {
     console.log('👨‍👩‍👧‍👦 4 membres famille créés');
     console.log('📦 2 commandes créées');
     console.log('📊 1 item inventaire créé');
-    console.log('🔑 Mot de passe par défaut: ByGagoos2025!');
+    console.log('ℹ️ Default password used for seeded users: set DEFAULT_PASSWORD in your environment to change it (value not displayed).');
 
   } catch (error) {
     console.error('❌ Erreur lors du seed:', error);

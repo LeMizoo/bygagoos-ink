@@ -158,7 +158,7 @@ export const loginUser = async (email, password) => {
       const localUsers = [
         {
           email: 'tovoniaina.rahendrison@gmail.com',
-          password: 'ByGagoos2025!',
+          password: import.meta.env.VITE_DEFAULT_PASSWORD || '',
           name: 'Tovoniaina RAHENDRISON',
           role: 'SUPER_ADMIN',
           color: '#2E7D32',
@@ -166,7 +166,7 @@ export const loginUser = async (email, password) => {
         },
         {
           email: 'dedettenadia@gmail.com',
-          password: 'ByGagoos2025!',
+          password: import.meta.env.VITE_DEFAULT_PASSWORD || '',
           name: 'Volatiana RANDRIANARISOA',
           role: 'FAMILY_MEMBER',
           color: '#9C27B0',
@@ -174,7 +174,7 @@ export const loginUser = async (email, password) => {
         },
         {
           email: 'miantsatianarahendrison@gmail.com',
-          password: 'ByGagoos2025!',
+          password: import.meta.env.VITE_DEFAULT_PASSWORD || '',
           name: 'Miantsatiana RAHENDRISON',
           role: 'FAMILY_MEMBER',
           color: '#FF9800',
@@ -182,7 +182,7 @@ export const loginUser = async (email, password) => {
         },
         {
           email: 'fanirytia17@gmail.com',
-          password: 'ByGagoos2025!',
+          password: import.meta.env.VITE_DEFAULT_PASSWORD || '',
           name: 'Tia Faniry RAHENDRISON',
           role: 'FAMILY_MEMBER',
           color: '#2196F3',

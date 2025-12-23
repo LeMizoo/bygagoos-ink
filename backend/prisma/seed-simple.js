@@ -1,13 +1,13 @@
-
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcrypt');
 const prisma = new PrismaClient();
+const DEFAULT_PASSWORD = process.env.DEFAULT_PASSWORD || 'changeme';
 
 async function main() {
   console.log('� Seeding simple...');
   
   // Juste créer un utilisateur admin
-  const hashedPassword = await bcrypt.hash('ByGagoos2025!', 10);
+  const hashedPassword = await bcrypt.hash(DEFAULT_PASSWORD, 10);
   
   await prisma.user.create({
     data: {

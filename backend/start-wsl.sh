@@ -23,10 +23,14 @@ echo "🔍 Vérification..."
 docker-compose ps
 
 echo "🌐 Test de l'API..."
-curl -s http://localhost:3001/api/health || echo "❌ API non disponible"
+if curl -s http://localhost:3001/api/health > /dev/null 2>&1; then
+  echo "✅ API disponible: http://localhost:3001/api/health"
+else
+  echo "❌ API non disponible - vérifiez les logs: docker-compose logs backend --tail=50"
+fi
 
 echo ""
 echo "✅ PRÊT !"
 echo "Frontend: http://localhost:5173"
 echo "Backend:  http://localhost:3001"
-echo "Login:    tovoniaina.rahendrison@gmail.com / ByGagoos2025!"
+echo "Credentials are NOT stored in repository. Configure them via environment variables."

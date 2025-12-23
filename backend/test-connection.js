@@ -1,8 +1,12 @@
 // backend/test-db.js
 const { Client } = require('pg');
 
+module.exports = {
+  connectionString: process.env.DATABASE_URL || "postgresql://postgres:postgres@localhost:5432/bygagoos_ink"
+};
+
 const client = new Client({
-  connectionString: "postgresql://postgres:ByGagoos2025!@localhost:5432/bygagoos_ink"
+  connectionString: module.exports.connectionString
 });
 
 async function testConnection() {

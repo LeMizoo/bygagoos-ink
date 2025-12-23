@@ -32,12 +32,15 @@ curl -s -o nul -w "%%{http_code}" http://localhost:3001/api/public/images/logo.p
 
 echo.
 echo 5. 🔐 TEST LOGIN API...
+REM Use DEFAULT_PASSWORD environment variable for tests instead of hardcoded values.
+set "DEFAULT_PASSWORD=%DEFAULT_PASSWORD%"
+
 curl -s -X POST http://localhost:3001/api/auth/login ^
   -H "Content-Type: application/json" ^
-  -d "{\"email\":\"tovoniaina.rahendrison@gmail.com\",\"password\":\"ByGagoos2025!\"}" 2>nul | findstr "success" >nul && (
+  -d "{\"email\":\"tovoniaina.rahendrison@gmail.com\",\"password\":\"%DEFAULT_PASSWORD%\"}" 2>nul | findstr "success" >nul && (
     echo ✅ Login API fonctionnel
 ) || (
-    echo ❌ Login API non fonctionnel
+    echo ❌ Login API non fonctionnel (assurez-vous que DEFAULT_PASSWORD est défini dans l'environnement)
 )
 
 echo.

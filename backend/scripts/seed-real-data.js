@@ -2,16 +2,18 @@ const { PrismaClient, UserRole, FamilyRole, Priority, OrderStatus } = require('@
 const bcrypt = require('bcryptjs')
 const prisma = new PrismaClient()
 
+const DEFAULT_PASSWORD = process.env.DEFAULT_PASSWORD || 'changeme'
+
 async function hashPassword(password) {
   const salt = await bcrypt.genSalt(10)
   return await bcrypt.hash(password, salt)
 }
 
 async function main() {
-  console.log('í¼± Initialisation des donnÃ©es rÃ©elles ByGagoos Ink...')
+  console.log('ï¿½ï¿½ï¿½ Initialisation des donnÃ©es rÃ©elles ByGagoos Ink...')
 
   // Nettoyer la base existante
-  console.log('í·¹ Nettoyage de la base de donnÃ©es...')
+  console.log('ï¿½ï¿½ï¿½ Nettoyage de la base de donnÃ©es...')
   
   const tableNames = await prisma.$queryRaw`
     SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_prisma_%'
@@ -22,12 +24,12 @@ async function main() {
   }
 
   // 1. CRÃ‰ATION DES UTILISATEURS FAMILIAUX
-  console.log('í±¥ CrÃ©ation des utilisateurs familiaux...')
+  console.log('ï¿½ï¿½ï¿½ CrÃ©ation des utilisateurs familiaux...')
   
   const users = [
     {
       email: 'tovoniaina.rahendrison@gmail.com',
-      password: await hashPassword('ByGagoos2025!'),
+      password: await hashPassword(DEFAULT_PASSWORD),
       firstName: 'Tovoniaina',
       lastName: 'RAHENDRISON',
       phone: '+261344359330',
@@ -38,7 +40,7 @@ async function main() {
     },
     {
       email: 'dedettenadia@gmail.com',
-      password: await hashPassword('ByGagoos2025!'),
+      password: await hashPassword(DEFAULT_PASSWORD),
       firstName: 'Volatiana',
       lastName: 'RANDRIANARISOA',
       phone: '+261320000001',
@@ -49,7 +51,7 @@ async function main() {
     },
     {
       email: 'miantsatianarahendrison@gmail.com',
-      password: await hashPassword('ByGagoos2025!'),
+      password: await hashPassword(DEFAULT_PASSWORD),
       firstName: 'Miantsatiana',
       lastName: 'RAHENDRISON',
       phone: '+261330000002',
@@ -60,7 +62,7 @@ async function main() {
     },
     {
       email: 'fanirytia17@gmail.com',
-      password: await hashPassword('ByGagoos2025!'),
+      password: await hashPassword(DEFAULT_PASSWORD),
       firstName: 'Tia Faniry',
       lastName: 'RAHENDRISON',
       phone: '+261340000003',
@@ -77,7 +79,7 @@ async function main() {
   console.log(`âœ… ${users.length} utilisateurs crÃ©Ã©s`)
 
   // 2. CRÃ‰ATION DES MATÃ‰RIAUX
-  console.log('í³¦ CrÃ©ation des matÃ©riaux de production...')
+  console.log('ï¿½ï¿½ï¿½ CrÃ©ation des matÃ©riaux de production...')
   
   const materials = [
     {
@@ -138,7 +140,7 @@ async function main() {
   console.log(`âœ… ${materials.length} matÃ©riaux crÃ©Ã©s`)
 
   // 3. CRÃ‰ATION DES CLIENTS
-  console.log('í±¥ CrÃ©ation des clients...')
+  console.log('ï¿½ï¿½ï¿½ CrÃ©ation des clients...')
   
   const clients = [
     {
@@ -197,7 +199,7 @@ async function main() {
   console.log(`âœ… ${clients.length} clients crÃ©Ã©s`)
 
   // 4. CRÃ‰ATION DES COMMANDES
-  console.log('í³‹ CrÃ©ation des commandes...')
+  console.log('ï¿½ï¿½ï¿½ CrÃ©ation des commandes...')
   
   const orders = [
     {
@@ -253,7 +255,7 @@ async function main() {
   console.log(`âœ… ${orders.length} commandes crÃ©Ã©es`)
 
   // 5. CRÃ‰ATION DES ARTICLES
-  console.log('í±• CrÃ©ation des articles...')
+  console.log('ï¿½ï¿½ï¿½ CrÃ©ation des articles...')
   
   const orderItems = [
     // Commande BG-2024-001
@@ -307,13 +309,13 @@ async function main() {
   }
   console.log(`âœ… ${orderItems.length} articles crÃ©Ã©s`)
 
-  console.log('í¾‰ Initialisation des donnÃ©es rÃ©elles terminÃ©e avec succÃ¨s!')
-  console.log('\ní³Š RÃ‰CAPITULATIF:')
-  console.log(`   í±¥ ${users.length} utilisateurs familiaux`)
-  console.log(`   í¿¢ ${clients.length} clients`)
-  console.log(`   í³¦ ${materials.length} matÃ©riaux`)
-  console.log(`   í³‹ ${orders.length} commandes`)
-  console.log(`   í±• ${orderItems.length} articles`)
+  console.log('ï¿½ï¿½ï¿½ Initialisation des donnÃ©es rÃ©elles terminÃ©e avec succÃ¨s!')
+  console.log('\nï¿½ï¿½ï¿½ RÃ‰CAPITULATIF:')
+  console.log(`   ï¿½ï¿½ï¿½ ${users.length} utilisateurs familiaux`)
+  console.log(`   ï¿½ï¿½ï¿½ ${clients.length} clients`)
+  console.log(`   ï¿½ï¿½ï¿½ ${materials.length} matÃ©riaux`)
+  console.log(`   ï¿½ï¿½ï¿½ ${orders.length} commandes`)
+  console.log(`   ï¿½ï¿½ï¿½ ${orderItems.length} articles`)
 }
 
 main()

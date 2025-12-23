@@ -27,3 +27,20 @@ model User {
 
   @@map("users")
 }
+
+model Inventory {
+  id        Int     @id @default(autoincrement())
+  itemType  String
+  itemName  String
+  color     String?
+  size      String?
+  quantity  Int     @default(0)
+  minimumStock Int @default(0)
+  unitCost  Int?
+  supplier  String?
+  location  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("inventory")
+}

@@ -6,7 +6,7 @@ console.log('======================================\n');
 // 1. VÃ©rifier Docker
 const { exec } = require('child_process');
 exec('docker ps --filter name=bygagoos', (error, stdout, stderr) => {
-  console.log('1. í°³ Docker Containers:');
+  console.log('1. ï¿½ï¿½ï¿½ Docker Containers:');
   console.log(stdout || 'âŒ Aucun conteneur trouvÃ©');
   console.log('---');
 
@@ -15,7 +15,7 @@ exec('docker ps --filter name=bygagoos', (error, stdout, stderr) => {
     let data = '';
     res.on('data', chunk => data += chunk);
     res.on('end', () => {
-      console.log('2. íº€ API Health Check:');
+      console.log('2. ï¿½ï¿½ï¿½ API Health Check:');
       console.log(JSON.parse(data));
       console.log('---');
 
@@ -24,7 +24,7 @@ exec('docker ps --filter name=bygagoos', (error, stdout, stderr) => {
         let data2 = '';
         res2.on('data', chunk => data2 += chunk);
         res2.on('end', () => {
-          console.log('3. í·„ï¸ Database Connection:');
+          console.log('3. ï¿½ï¿½ï¿½ï¸ Database Connection:');
           console.log(JSON.parse(data2));
           console.log('---');
 
@@ -35,21 +35,22 @@ exec('docker ps --filter name=bygagoos', (error, stdout, stderr) => {
             select: { name: true, email: true, role: true, familyRole: true }
           })
           .then(users => {
-            console.log('4. í±¨â€í±©â€í±§â€í±¦ Family Users Created:');
+            console.log('4. ï¿½ï¿½ï¿½â€ï¿½ï¿½ï¿½â€ï¿½ï¿½ï¿½â€ï¿½ï¿½ï¿½ Family Users Created:');
             users.forEach((user, i) => {
               console.log(`   ${i+1}. ${user.name}`);
-              console.log(`      í³§ ${user.email}`);
-              console.log(`      í±‘ ${user.role} - ${user.familyRole}`);
+              console.log(`      ï¿½ï¿½ï¿½ ${user.email}`);
+              console.log(`      ï¿½ï¿½ï¿½ ${user.role} - ${user.familyRole}`);
             });
             console.log('---');
-            console.log('í¾‰ BYGAGOOS-INK BACKEND EST OPÃ‰RATIONNEL !');
-            console.log('\ní´— URLs importantes:');
-            console.log('   í¼ API: http://localhost:3001');
-            console.log('   í·„ï¸ Prisma Studio: http://localhost:5555');
-            console.log('   í³Š PGAdmin: http://localhost:5050');
-            console.log('\ní´‘ Identifiants test:');
-            console.log('   í±¨â€í²» tovoniaina.rahendrison@gmail.com / ByGagoos2025!');
-            console.log('\níº€ PrÃªt pour le dÃ©veloppement du frontend !');
+            console.log('ï¿½ï¿½ï¿½ BYGAGOOS-INK BACKEND EST OPÃ‰RATIONNEL !');
+            console.log('\nï¿½ï¿½ï¿½ URLs importantes:');
+            console.log('   ï¿½ï¿½ï¿½ API: http://localhost:3001');
+            console.log('   ï¿½ï¿½ï¿½ï¸ Prisma Studio: http://localhost:5555');
+            console.log('   ï¿½ï¿½ï¿½ PGAdmin: http://localhost:5050');
+            console.log('\nï¿½ï¿½ï¿½ Identifiants test:');
+            console.log('   â„¹ï¸ Verification run â€” do not log passwords. Use DEFAULT_PASSWORD in environment when testing logins.');
+            console.log('   ï¿½ï¿½ï¿½â€ï¿½ï¿½ï¿½ tovoniaina.rahendrison@gmail.com / ByGagoos2025!');
+            console.log('\nï¿½ï¿½ï¿½ PrÃªt pour le dÃ©veloppement du frontend !');
             
             prisma.$disconnect();
           })

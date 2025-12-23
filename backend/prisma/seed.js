@@ -2,12 +2,14 @@ const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 const prisma = new PrismaClient();
 
+const DEFAULT_PASSWORD = process.env.DEFAULT_PASSWORD || 'changeme';
+
 async function hashPassword(password) {
   return await bcrypt.hash(password, 10);
 }
 
 async function main() {
-  console.log('Ìº± Initialisation des donn√©es ByGagoos Ink...');
+  console.log('ÔøΩÔøΩÔøΩ Initialisation des donn√©es ByGagoos Ink...');
   
   // Nettoyer
   await prisma.user.deleteMany({});
@@ -16,7 +18,7 @@ async function main() {
   const users = [
     {
       email: 'tovoniaina.rahendrison@gmail.com',
-      password: await hashPassword('ByGagoos2025!'),
+      password: await hashPassword(DEFAULT_PASSWORD),
       firstName: 'Tovoniaina',
       lastName: 'RAHENDRISON',
       phone: '+261344359330',
@@ -26,7 +28,7 @@ async function main() {
     },
     {
       email: 'dedettenadia@gmail.com',
-      password: await hashPassword('ByGagoos2025!'),
+      password: await hashPassword(DEFAULT_PASSWORD),
       firstName: 'Volatiana',
       lastName: 'RANDRIANARISOA',
       phone: '+261320000001',
@@ -36,7 +38,7 @@ async function main() {
     },
     {
       email: 'miantsatianarahendrison@gmail.com',
-      password: await hashPassword('ByGagoos2025!'),
+      password: await hashPassword(DEFAULT_PASSWORD),
       firstName: 'Miantsatiana',
       lastName: 'RAHENDRISON',
       phone: '+261330000002',
@@ -46,7 +48,7 @@ async function main() {
     },
     {
       email: 'fanirytia17@gmail.com',
-      password: await hashPassword('ByGagoos2025!'),
+      password: await hashPassword(DEFAULT_PASSWORD),
       firstName: 'Tia Faniry',
       lastName: 'RAHENDRISON',
       phone: '+261340000003',
@@ -61,9 +63,9 @@ async function main() {
     console.log(`‚úÖ ${user.firstName} ${user.lastName}`);
   }
   
-  console.log('Ìæâ 4 utilisateurs familiaux cr√©√©s!');
-  console.log('Ì≥ß Connexion: tovoniaina.rahendrison@gmail.com');
-  console.log('Ì¥ë Mot de passe: ByGagoos2025!');
+  console.log('ÔøΩÔøΩÔøΩ 4 utilisateurs familiaux cr√©√©s!');
+  console.log('ÔøΩÔøΩÔøΩ Connexion: tovoniaina.rahendrison@gmail.com');
+  console.log('‚ö†Ô∏è Mot de passe par d√©faut utilis√© pour les seeds: d√©finissez DEFAULT_PASSWORD dans l\'environnement pour le changer (valeur non affich√©e).');
 }
 
 main()

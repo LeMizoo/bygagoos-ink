@@ -19,6 +19,9 @@ import SettingsPage from './pages/SettingsPage';
 import ProfilePage from './pages/ProfilePage';
 import Gallery from './pages/Gallery';
 import ProductionTeam from './pages/ProductionTeam';
+import AccountingPage from './pages/AccountingPage';
+import LogisticsPage from './pages/LogisticsPage';
+import StockConsumablesPage from './pages/StockConsumablesPage';
 
 // Components
 import ProtectedRoute from './components/ProtectedRoute';
@@ -211,6 +214,21 @@ const App = () => {
             <Route path="/production" element={
               <ProtectedRoute>
                 <ProductionTeam />
+              </ProtectedRoute>
+            } />
+            <Route path="/accounting" element={
+              <ProtectedRoute>
+                <AccountingPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/logistics" element={
+              <ProtectedRoute>
+                <LogisticsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/stock" element={
+              <ProtectedRoute>
+                <StockConsumablesPage />
               </ProtectedRoute>
             } />
             <Route path="/clients" element={

@@ -34,7 +34,6 @@ echo ✅ DOCKER DÉMARRÉ AVEC SUCCÈS
 echo ============================================
 echo Frontend: http://localhost:5173
 echo Backend:  http://localhost:3001
-echo Login:    tovoniaina.rahendrison@gmail.com
-echo Mot de passe: ByGagoos2025!
+echo Credentials are NOT stored in repository. Configure them via environment variables or secrets manager.
 echo ============================================
 pause

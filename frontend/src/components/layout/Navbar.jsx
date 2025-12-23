@@ -29,6 +29,9 @@ const pages = [
   { name: 'Équipe Familiale', path: '/family', icon: <FamilyRestroomIcon /> },
   { name: '🎉 Inauguration', path: '/gallery', icon: <CelebrationIcon /> },
   { name: 'Équipe Production', path: '/production', icon: <FamilyRestroomIcon /> },
+  { name: 'Comptabilité', path: '/accounting', icon: <DashboardIcon /> },
+  { name: 'Logistique', path: '/logistics', icon: <DashboardIcon /> },
+  { name: 'Stocks', path: '/stock', icon: <DashboardIcon /> },
 ];
 
 const settings = [

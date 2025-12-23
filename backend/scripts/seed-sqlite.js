@@ -3,6 +3,7 @@ const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 
 const prisma = new PrismaClient();
+const DEFAULT_PASSWORD = process.env.DEFAULT_PASSWORD || 'changeme';
 
 async function seed() {
   console.log('🌱 Début du seed SQLite...');
@@ -23,7 +24,7 @@ async function seed() {
     const users = [
       {
         email: 'tovoniaina.rahendrison@gmail.com',
-        password: 'ByGagoos2025!',
+        password: DEFAULT_PASSWORD,
         name: 'Tovoniaina RAHENDRISON',
         role: 'SUPER_ADMIN',
         color: '#2E7D32',
@@ -31,7 +32,7 @@ async function seed() {
       },
       {
         email: 'dedettenadia@gmail.com',
-        password: 'ByGagoos2025!',
+        password: DEFAULT_PASSWORD,
         name: 'Volatiana RANDRIANARISOA',
         role: 'FAMILY_MEMBER',
         color: '#9C27B0',
@@ -39,7 +40,7 @@ async function seed() {
       },
       {
         email: 'miantsatianarahendrison@gmail.com',
-        password: 'ByGagoos2025!',
+        password: DEFAULT_PASSWORD,
         name: 'Miantsatiana RAHENDRISON',
         role: 'FAMILY_MEMBER',
         color: '#FF9800',
@@ -47,7 +48,7 @@ async function seed() {
       },
       {
         email: 'fanirytia17@gmail.com',
-        password: 'ByGagoos2025!',
+        password: DEFAULT_PASSWORD,
         name: 'Tia Faniry RAHENDRISON',
         role: 'FAMILY_MEMBER',
         color: '#2196F3',
@@ -104,7 +105,7 @@ async function seed() {
     console.log('👥 4 utilisateurs créés');
     console.log('👨‍👩‍👧‍👦 4 membres famille créés');
     console.log('📦 1 commande créée');
-    console.log('🔑 Mot de passe: ByGagoos2025!');
+    console.log('ℹ️ Using DEFAULT_PASSWORD from environment for seeded users (value not displayed)');
 
   } catch (error) {
     console.error('❌ Erreur lors du seed SQLite:', error);

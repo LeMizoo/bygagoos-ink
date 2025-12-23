@@ -1,3 +1,9 @@
+const DEFAULT_PASSWORD = process.env.DEFAULT_PASSWORD || '';
+
+if (!DEFAULT_PASSWORD) {
+  console.warn('⚠️ DEFAULT_PASSWORD not set - api_test will send an empty password. Set DEFAULT_PASSWORD in environment to test credentials.');
+}
+
 (async () => {
   const base = 'http://localhost:3001';
   try {
@@ -5,7 +11,7 @@
     let r = await fetch(base + '/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'tovoniaina.rahendrison@gmail.com', password: 'ByGagoos2025!' })
+      body: JSON.stringify({ email: 'tovoniaina.rahendrison@gmail.com', password: DEFAULT_PASSWORD })
     });
     let js = await r.json();
     console.log('LOGIN RESPONSE:', JSON.stringify(js, null, 2));

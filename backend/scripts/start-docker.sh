@@ -53,7 +53,7 @@ echo "🌐 TEST API:"
 echo "========================================"
 if curl -s http://localhost:3001/api/health > /dev/null 2>&1; then
     echo "✅ API backend est en cours d'exécution"
-    curl -s http://localhost:3001/api/health | jq -r '.status, .database, "Utilisateurs: \(.users)"' || curl -s http://localhost:3001/api/health
+    curl -s http://localhost:3001/api/health | jq -r '.status, .database, "Utilisateurs: \\(.users)"' || curl -s http://localhost:3001/api/health
 else
     echo "❌ API backend n'est pas accessible"
     echo "Consultation des logs..."
@@ -72,9 +72,9 @@ echo "   API Health: http://localhost:3001/api/health"
 echo "   PostgreSQL: localhost:5432"
 echo ""
 echo "🔑 IDENTIFIANTS:"
-echo "   PostgreSQL: postgres / password"
+echo "   PostgreSQL: postgres / (set POSTGRES_PASSWORD via environment)"
 echo "   Login: tovoniaina.rahendrison@gmail.com"
-echo "   Mot de passe: ByGagoos2025!"
+echo "   Default password: configure via environment variable DEFAULT_PASSWORD (not committed)"
 echo ""
 echo "📋 COMMANDES UTILES:"
 echo "   docker-compose logs -f       # Voir les logs"

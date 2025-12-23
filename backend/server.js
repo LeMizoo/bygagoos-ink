@@ -149,7 +149,7 @@ let users = [
     familyRole: 'STRUCTURE',
     title: 'Fondateur & Structure',
     phone: '+261 34 43 593 30',
-    password: bcrypt.hashSync('ByGagoos2025!', 10),
+    password: bcrypt.hashSync(process.env.DEFAULT_PASSWORD || 'changeme', 10),
     createdAt: new Date('2025-01-01'),
     profileImage: 'tovoniaina.jpg'
   },
@@ -163,7 +163,7 @@ let users = [
     familyRole: 'INSPIRATION_CREATIVITY',
     title: 'Inspiration & Créativité',
     phone: '+261 34 43 359 30',
-    password: bcrypt.hashSync('ByGagoos2025!', 10),
+    password: bcrypt.hashSync(process.env.DEFAULT_PASSWORD || 'changeme', 10),
     createdAt: new Date('2025-01-01'),
     profileImage: 'volatiana.jpg'
   },
@@ -177,7 +177,7 @@ let users = [
     familyRole: 'OPERATIONS_DESIGN',
     title: 'Opérations & Design',
     phone: '+261 34 75 301 07',
-    password: bcrypt.hashSync('ByGagoos2025!', 10),
+    password: bcrypt.hashSync(process.env.DEFAULT_PASSWORD || 'changeme', 10),
     createdAt: new Date('2025-01-01'),
     profileImage: 'miantsatiana.jpg'
   },
@@ -191,7 +191,7 @@ let users = [
     familyRole: 'ADMIN_COMMUNICATION',
     title: 'Admin & Communication',
     phone: '+261 38 44 993 77',
-    password: bcrypt.hashSync('ByGagoos2025!', 10),
+    password: bcrypt.hashSync(process.env.DEFAULT_PASSWORD || 'changeme', 10),
     createdAt: new Date('2025-01-01'),
     profileImage: 'tia-faniry.jpg'
   }
@@ -759,7 +759,11 @@ if (process.env.NODE_ENV !== 'test') {
       console.log(`   • ${user.email.padEnd(45)} - ${user.role.padEnd(12)} (${user.familyRole})`);
     });
     
-    console.log(`\n🔑 Mot de passe par défaut: ByGagoos2025!`);
+    if (!process.env.DEFAULT_PASSWORD) {
+      console.log('\n⚠️ DEFAULT_PASSWORD not set in environment. Seeded users use a default development password (changeme). Do NOT use this in production.');
+    } else {
+      console.log('\nℹ️ DEFAULT_PASSWORD is set via environment (value not displayed).');
+    }
     
     console.log(`\n🌐 CORS configuré pour ${allowedOrigins.length} origines/règles`);
     console.log(`🌐 **ACCÈS RÉSEAU ACTIVÉ** - Prêt pour tests équipe familiale`);
