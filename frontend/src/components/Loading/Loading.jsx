@@ -1,19 +1,13 @@
-import React from 'react';
+// frontend/src/components/Loading/Loading.jsx
 import { getImageUrl, getPlaceholderImage } from '../../config/images';
 import './Loading.css';
 
-const Loading = ({ 
-  message = "Chargement en cours...", 
-  variant = "default",
-  size = "normal"
-}) => {
-  const containerClass = `loading-container ${variant} ${size === 'mini' ? 'mini' : ''}`;
-  
+const Loading = () => {
   return (
-    <div className={containerClass}>
+    <div className="loading-container">
       <div className="loading-spinner"></div>
       <img 
-        src={getImageUrl('/images/logo.png')}
+        src={getImageUrl('/images/logo.png')} // ⬅️ CORRIGÉ
         alt="ByGagoos-Ink Logo" 
         className="loading-logo"
         onError={(e) => {
@@ -21,16 +15,9 @@ const Loading = ({
           e.target.style.display = 'block';
         }}
       />
-      <p className="loading-text">{message}</p>
+      <p className="loading-text">Chargement...</p>
     </div>
   );
-};
-
-// Props par défaut
-Loading.defaultProps = {
-  message: "Chargement en cours...",
-  variant: "default",
-  size: "normal"
 };
 
 export default Loading;
