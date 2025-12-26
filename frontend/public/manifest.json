@@ -1,9 +1,0 @@
-{
-  "name": "ByGagoos-Ink",
-  "short_name": "ByGagoos",
-  "description": "Atelier de sérigraphie familiale",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#667eea"
-}

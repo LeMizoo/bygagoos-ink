@@ -1,7 +1,0 @@
-# í³– Documentation ByGagoos-Ink
-- README.md
-- PROJECT_STRUCTURE.md
-- DEMARRAGE_RAPIDE.md
-- DEPLOYMENT_READY.md
-- TESTING.md
-- USERS_MANAGEMENT.md
