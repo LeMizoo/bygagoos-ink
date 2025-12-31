@@ -1,72 +1,83 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { Icons } from '../../utils/icons'; // Nouveau fichier d'icônes
 import './Sidebar.css';
 
 const Sidebar = ({ onClose }) => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
-  // Toutes les pages fonctionnelles maintenant
+  // Navigation avec icônes professionnelles
   const menuItems = [
     { 
       path: '/app/dashboard', 
-      icon: '📊', 
+      icon: Icons.dashboard,
       label: 'Tableau de bord',
+      description: 'Vue d\'ensemble',
       badge: null
     },
     { 
       path: '/app/orders', 
-      icon: '📋', 
+      icon: Icons.orders,
       label: 'Commandes',
-      badge: 5
+      description: 'Gestion des commandes',
+      badge: 12
     },
     { 
       path: '/app/orders/new', 
-      icon: '➕', 
+      icon: Icons.newOrder,
       label: 'Nouvelle Commande',
+      description: 'Créer une commande',
       badge: null,
       isAction: true
     },
     { 
       path: '/app/clients', 
-      icon: '👥', 
+      icon: Icons.clients,
       label: 'Clients',
-      badge: 12
+      description: 'Gestion clientèle',
+      badge: 24
     },
     { 
       path: '/app/production', 
-      icon: '🏭', 
-      label: 'Équipe Production',
+      icon: Icons.production,
+      label: 'Production',
+      description: 'Équipe et planning',
       badge: null
     },
     { 
       path: '/app/stock', 
-      icon: '📦', 
-      label: 'Gestion du Stock',
+      icon: Icons.stock,
+      label: 'Stock',
+      description: 'Inventaire et fournitures',
       badge: '3'
     },
     { 
       path: '/app/calendar', 
-      icon: '📅', 
+      icon: Icons.calendar,
       label: 'Calendrier',
+      description: 'Planning et rendez-vous',
       badge: '8'
     },
     { 
       path: '/app/documents', 
-      icon: '📄', 
+      icon: Icons.documents,
       label: 'Documents',
+      description: 'Contrats et factures',
       badge: null
     },
     { 
       path: '/app/logistics', 
-      icon: '🚚', 
+      icon: Icons.logistics,
       label: 'Logistique',
+      description: 'Livraisons et transport',
       badge: '2'
     },
     { 
       path: '/app/accounting', 
-      icon: '💰', 
+      icon: Icons.accounting,
       label: 'Comptabilité',
+      description: 'Finances et paiements',
       badge: '4'
     },
   ];
@@ -74,20 +85,23 @@ const Sidebar = ({ onClose }) => {
   const settingsItems = [
     { 
       path: '/app/profile', 
-      icon: '👤', 
+      icon: Icons.profile,
       label: 'Mon Profil',
+      description: 'Informations personnelles',
       badge: null
     },
     { 
       path: '/app/settings', 
-      icon: '⚙️', 
+      icon: Icons.settings,
       label: 'Paramètres',
+      description: 'Configuration',
       badge: null
     },
     { 
       path: '/family', 
-      icon: '🏡', 
-      label: 'Page Familiale Publique',
+      icon: Icons.family,
+      label: 'Page Familiale',
+      description: 'Site public',
       badge: null,
       isPublic: true
     },
@@ -114,7 +128,8 @@ const Sidebar = ({ onClose }) => {
         'manager': 'Gérant',
         'designer': 'Designer',
         'admin': 'Administrateur',
-        'production': 'Production'
+        'production': 'Production',
+        'family': 'Membre Familial'
       };
       return roles[user.role] || user.role;
     }
@@ -122,19 +137,24 @@ const Sidebar = ({ onClose }) => {
   };
 
   const handleItemClick = () => {
-    // Fermer la sidebar sur mobile quand on clique sur un élément
+    // Fermer la sidebar sur mobile
     if (window.innerWidth < 768 && onClose) {
       onClose();
     }
   };
 
+  const handleLogout = () => {
+    logout();
+    if (onClose) onClose();
+  };
+
   return (
     <aside className="sidebar">
-      {/* En-tête avec logo et utilisateur */}
+      {/* En-tête */}
       <div className="sidebar-header">
         <div className="sidebar-brand">
           <div className="brand-logo">
-            <span className="logo-icon">👕</span>
+            <span className="logo-icon">{Icons.workshop}</span>
             <div className="brand-text">
               <span className="brand-name">ByGagoos</span>
               <span className="brand-subtitle">Sérigraphie Textile</span>
@@ -151,7 +171,7 @@ const Sidebar = ({ onClose }) => {
             <div className="user-role">{getUserRole()}</div>
             <div className="user-status">
               <span className="status-dot online"></span>
-              <span className="status-text">Connecté</span>
+              <span className="status-text">En ligne</span>
             </div>
           </div>
         </div>
@@ -161,7 +181,7 @@ const Sidebar = ({ onClose }) => {
       <nav className="sidebar-nav">
         <div className="nav-section">
           <h3 className="nav-section-title">
-            <span className="section-icon">📍</span>
+            <span className="section-icon">{Icons.navigation}</span>
             Navigation Principale
           </h3>
           <ul className="nav-menu">
@@ -173,9 +193,13 @@ const Sidebar = ({ onClose }) => {
                     `nav-link ${isActive ? 'active' : ''}`
                   }
                   onClick={handleItemClick}
+                  title={item.description}
                 >
                   <span className="nav-icon">{item.icon}</span>
-                  <span className="nav-label">{item.label}</span>
+                  <div className="nav-text">
+                    <span className="nav-label">{item.label}</span>
+                    <span className="nav-description">{item.description}</span>
+                  </div>
                   {item.badge && (
                     <span className="nav-badge">
                       {item.badge}
@@ -190,10 +214,10 @@ const Sidebar = ({ onClose }) => {
           </ul>
         </div>
 
-        {/* Section paramètres et profil */}
+        {/* Paramètres */}
         <div className="nav-section">
           <h3 className="nav-section-title">
-            <span className="section-icon">⚙️</span>
+            <span className="section-icon">{Icons.settings}</span>
             Compte & Paramètres
           </h3>
           <ul className="nav-menu">
@@ -205,13 +229,17 @@ const Sidebar = ({ onClose }) => {
                     `nav-link ${isActive ? 'active' : ''}`
                   }
                   onClick={handleItemClick}
+                  title={item.description}
                   target={item.isPublic ? '_blank' : '_self'}
                 >
                   <span className="nav-icon">{item.icon}</span>
-                  <span className="nav-label">{item.label}</span>
+                  <div className="nav-text">
+                    <span className="nav-label">{item.label}</span>
+                    <span className="nav-description">{item.description}</span>
+                  </div>
                   {item.isPublic && (
                     <span className="external-indicator">
-                      ↗️
+                      {Icons.external}
                     </span>
                   )}
                 </NavLink>
@@ -226,7 +254,7 @@ const Sidebar = ({ onClose }) => {
         {/* Statut atelier */}
         <div className="atelier-status-card">
           <div className="status-header">
-            <span className="status-icon">🏭</span>
+            <span className="status-icon">{Icons.workshop}</span>
             <div className="status-info">
               <div className="status-title">Atelier ByGagoos</div>
               <div className="status-subtitle">Statut actuel</div>
@@ -243,7 +271,7 @@ const Sidebar = ({ onClose }) => {
             </div>
             <div className="status-item">
               <span className="item-label">Commandes:</span>
-              <span className="item-value value-active">5 en cours</span>
+              <span className="item-value value-active">12 en cours</span>
             </div>
           </div>
           <div className="status-indicator">
@@ -252,23 +280,19 @@ const Sidebar = ({ onClose }) => {
           </div>
         </div>
 
-        {/* Version et déconnexion */}
+        {/* Déconnexion */}
         <div className="footer-bottom">
           <div className="version-info">
-            <span className="version-icon">🔄</span>
-            <span className="version-text">Version 1.0.0</span>
+            <span className="version-icon">{Icons.refresh}</span>
+            <span className="version-text">v1.0.0</span>
           </div>
           
           <button 
             className="logout-btn"
-            onClick={() => {
-              localStorage.removeItem('family_token');
-              localStorage.removeItem('user');
-              window.location.href = '/';
-              if (onClose) onClose();
-            }}
+            onClick={handleLogout}
+            title="Se déconnecter"
           >
-            <span className="logout-icon">🚪</span>
+            <span className="logout-icon">{Icons.logout}</span>
             <span className="logout-text">Déconnexion</span>
           </button>
         </div>

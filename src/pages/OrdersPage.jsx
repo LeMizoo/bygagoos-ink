@@ -1,341 +1,299 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Icons, StatusIcons, ActionIcons } from '../utils/icons';
 import './OrdersPage.css';
 
 const OrdersPage = () => {
+  const navigate = useNavigate();
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [priorityFilter, setPriorityFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const ordersPerPage = 10;
 
-  const orders = [
-    {
-      id: '#BG-1245',
-      client: 'Boutique MadaStyle',
-      date: '15/12/2024',
-      produit: 'T-shirts logo entreprise',
-      quantité: 150,
-      type: 'T-shirt Cotton',
-      couleurs: 'Noir + Or',
-      statut: 'impression',
-      priorité: 'haute',
-      prix: '2.4M Ar',
-      responsable: 'Maman'
-    },
-    {
-      id: '#BG-1244',
-      client: 'École Les Petits Génies',
-      date: '14/12/2024',
-      produit: 'Polos scolaire',
-      quantité: 300,
-      type: 'Polo Piqué',
-      couleurs: 'Bleu + Blanc',
-      statut: 'séchage',
-      priorité: 'moyenne',
-      prix: '3.6M Ar',
-      responsable: 'Junior'
-    },
-    {
-      id: '#BG-1243',
-      client: 'Restaurant La Terrasse',
-      date: '13/12/2024',
-      produit: 'Tabliers équipe',
-      quantité: 25,
-      type: 'Tablier Cuisinier',
-      couleurs: 'Noir',
-      statut: 'terminé',
-      priorité: 'normale',
-      prix: '450K Ar',
-      responsable: 'Soeur'
-    },
-    {
-      id: '#BG-1242',
-      client: 'Startup TechMG',
-      date: '12/12/2024',
-      produit: 'Sweatshirts team',
-      quantité: 80,
-      type: 'Sweat Capuche',
-      couleurs: 'Gris + Orange',
-      statut: 'design',
-      priorité: 'haute',
-      prix: '2.0M Ar',
-      responsable: 'Papa'
-    },
-    {
-      id: '#BG-1241',
-      client: 'Association Sportive',
-      date: '11/12/2024',
-      produit: 'Maillots football',
-      quantité: 50,
-      type: 'Maillot Sport',
-      couleurs: 'Vert + Blanc',
-      statut: 'attente',
-      priorité: 'normale',
-      prix: '1.2M Ar',
-      responsable: 'Maman'
-    },
+  // Données d'exemple avec icônes pro
+  const sampleOrders = [
+    { id: 1, client: 'Sarah Andria', product: 'T-shirts Logo', quantity: 150, status: 'impression', deadline: '20/02/2024', amount: '450,000 Ar' },
+    { id: 2, client: 'Jean Rakoto', product: 'Sweat-shirts Entreprise', quantity: 80, status: 'sechage', deadline: '18/02/2024', amount: '320,000 Ar' },
+    { id: 3, client: 'Marie Rasoa', product: 'Polos Personnalisés', quantity: 200, status: 'termine', deadline: '15/02/2024', amount: '680,000 Ar' },
+    { id: 4, client: 'Tiana Rajaona', product: 'Casquettes Brodées', quantity: 50, status: 'design', deadline: '22/02/2024', amount: '240,000 Ar' },
+    { id: 5, client: 'Robert Andriam', product: 'Tote Bags Sérigraphiés', quantity: 100, status: 'impression', deadline: '25/02/2024', amount: '180,000 Ar' },
+    { id: 6, client: 'Nirina Rajo', product: 'Uniformes Restauration', quantity: 60, status: 'sechage', deadline: '19/02/2024', amount: '540,000 Ar' },
+    { id: 7, client: 'Hanta Ralay', product: 'Écharpes Entreprise', quantity: 120, status: 'termine', deadline: '16/02/2024', amount: '360,000 Ar' },
+    { id: 8, client: 'Fidy Andri', product: 'Masques Textiles', quantity: 300, status: 'design', deadline: '28/02/2024', amount: '150,000 Ar' },
   ];
 
+  useEffect(() => {
+    // Simulation de chargement
+    setTimeout(() => {
+      setOrders(sampleOrders);
+      setLoading(false);
+    }, 800);
+  }, []);
+
+  const handleNewOrder = () => {
+    navigate('/app/orders/new');
+  };
+
+  const handleViewOrder = (id) => {
+    navigate(`/app/orders/edit/${id}`);
+  };
+
+  const getStatusIcon = (status) => {
+    switch(status) {
+      case 'impression': return Icons.print;
+      case 'sechage': return Icons.clock;
+      case 'termine': return Icons.success;
+      case 'design': return Icons.design;
+      default: return Icons.pending;
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch(status) {
+      case 'impression': return 'status-impression';
+      case 'sechage': return 'status-sechage';
+      case 'termine': return 'status-termine';
+      case 'design': return 'status-design';
+      default: return 'status-default';
+    }
+  };
+
   const filteredOrders = orders.filter(order => {
-    const matchesSearch = 
-      order.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.produit.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.id.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'all' || order.statut === statusFilter;
-    const matchesPriority = priorityFilter === 'all' || order.priorité === priorityFilter;
-    
-    return matchesSearch && matchesStatus && matchesPriority;
+    const matchesSearch = order.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         order.product.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
+    return matchesSearch && matchesStatus;
   });
 
-  const getStatusBadge = (statut) => {
-    const statusConfig = {
-      'attente': { label: 'En Attente', color: '#8b5cf6', bg: '#f5f3ff', icon: '⏳' },
-      'design': { label: 'Design', color: '#3b82f6', bg: '#eff6ff', icon: '🎨' },
-      'impression': { label: 'Impression', color: '#f59e0b', bg: '#fffbeb', icon: '🖨️' },
-      'séchage': { label: 'Séchage', color: '#10b981', bg: '#ecfdf5', icon: '🌞' },
-      'emballage': { label: 'Emballage', color: '#06d6a0', bg: '#ecfdf5', icon: '📦' },
-      'terminé': { label: 'Terminé', color: '#10b981', bg: '#ecfdf5', icon: '✅' },
-      'livré': { label: 'Livré', color: '#8b5cf6', bg: '#f5f3ff', icon: '🚚' },
-    };
-    
-    const config = statusConfig[statut] || { label: statut, color: '#6b7280', bg: '#f3f4f6', icon: '📋' };
-    
-    return (
-      <span className="status-badge" style={{ 
-        color: config.color, 
-        backgroundColor: config.bg 
-      }}>
-        <span className="status-icon">{config.icon}</span>
-        {config.label}
-      </span>
-    );
-  };
+  const indexOfLastOrder = currentPage * ordersPerPage;
+  const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+  const currentOrders = filteredOrders.slice(indexOfFirstOrder, indexOfLastOrder);
+  const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
 
-  const getPriorityBadge = (priorité) => {
-    const priorityConfig = {
-      'haute': { label: 'Haute', color: '#ef4444', icon: '🔥' },
-      'moyenne': { label: 'Moyenne', color: '#f59e0b', icon: '⚠️' },
-      'normale': { label: 'Normale', color: '#10b981', icon: '✅' },
-    };
-    
-    const config = priorityConfig[priorité] || { label: priorité, color: '#6b7280', icon: '📋' };
-    
+  if (loading) {
     return (
-      <span className="priority-badge" style={{ color: config.color }}>
-        {config.icon} {config.label}
-      </span>
+      <div className="orders-page">
+        <div className="loading-container">
+          <div className="loading-spinner">{Icons.refresh}</div>
+          <p>Chargement des commandes...</p>
+        </div>
+      </div>
     );
-  };
-
-  const getResponsibleAvatar = (responsable) => {
-    const avatars = {
-      'Papa': '👨',
-      'Maman': '👩', 
-      'Junior': '👦',
-      'Soeur': '👧'
-    };
-    return avatars[responsable] || '👤';
-  };
+  }
 
   return (
     <div className="orders-page">
+      {/* Header */}
       <div className="page-header">
-        <div>
-          <h1>Gestion des Commandes</h1>
-          <p className="page-subtitle">Suivez et gérez toutes les commandes de l'atelier</p>
+        <div className="header-left">
+          <h1><span className="header-icon">{Icons.orders}</span> Commandes</h1>
+          <p className="page-subtitle">Gestion des commandes clients</p>
         </div>
-        <button className="btn-primary">
-          <span className="btn-icon">➕</span>
-          Nouvelle Commande
-        </button>
-      </div>
-
-      {/* Stats Summary */}
-      <div className="orders-stats">
-        <div className="stat-card">
-          <div className="stat-icon">🖨️</div>
-          <div className="stat-content">
-            <div className="stat-value">{orders.length}</div>
-            <div className="stat-label">Commandes Actives</div>
-            <div className="stat-trend">+3 cette semaine</div>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon">💰</div>
-          <div className="stat-content">
-            <div className="stat-value">9.6M Ar</div>
-            <div className="stat-label">CA en cours</div>
-            <div className="stat-trend positive">+18%</div>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon">⏱️</div>
-          <div className="stat-content">
-            <div className="stat-value">2.3j</div>
-            <div className="stat-label">Délai moyen</div>
-            <div className="stat-trend negative">+0.5j</div>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon">👨‍👩‍👧‍👦</div>
-          <div className="stat-content">
-            <div className="stat-value">4/4</div>
-            <div className="stat-label">Équipe active</div>
-            <div className="stat-trend">Toute la famille</div>
-          </div>
+        <div className="header-actions">
+          <button className="btn btn-primary" onClick={handleNewOrder}>
+            <span className="btn-icon">{Icons.newOrder}</span>
+            Nouvelle Commande
+          </button>
         </div>
       </div>
 
       {/* Filters */}
       <div className="filters-section">
         <div className="search-box">
-          <span className="search-icon">🔍</span>
+          <span className="search-icon">{Icons.search}</span>
           <input
             type="text"
-            placeholder="Rechercher commande, client ou produit..."
+            placeholder="Rechercher une commande..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="search-input"
           />
         </div>
         
-        <div className="filter-group">
-          <select 
-            value={statusFilter} 
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="filter-select"
-          >
-            <option value="all">Tous les statuts</option>
-            <option value="attente">En Attente</option>
-            <option value="design">Design</option>
-            <option value="impression">Impression</option>
-            <option value="séchage">Séchage</option>
-            <option value="emballage">Emballage</option>
-            <option value="terminé">Terminé</option>
-            <option value="livré">Livré</option>
-          </select>
+        <div className="filter-options">
+          <div className="filter-group">
+            <span className="filter-icon">{Icons.filter}</span>
+            <select 
+              value={statusFilter} 
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="filter-select"
+            >
+              <option value="all">Tous les statuts</option>
+              <option value="design">{Icons.design} Design</option>
+              <option value="impression">{Icons.print} Impression</option>
+              <option value="sechage">{Icons.clock} Séchage</option>
+              <option value="termine">{Icons.success} Terminé</option>
+            </select>
+          </div>
           
-          <select 
-            value={priorityFilter} 
-            onChange={(e) => setPriorityFilter(e.target.value)}
-            className="filter-select"
-          >
-            <option value="all">Toutes priorités</option>
-            <option value="haute">Haute Priorité</option>
-            <option value="moyenne">Moyenne</option>
-            <option value="normale">Normale</option>
-          </select>
-          
-          <button className="filter-btn">
-            <span className="btn-icon">📅</span>
-            Filtres Date
-          </button>
-          
-          <button className="filter-btn export">
-            <span className="btn-icon">📤</span>
-            Exporter
-          </button>
+          <div className="stats-badge">
+            <span className="stats-icon">{Icons.orders}</span>
+            <span className="stats-count">{filteredOrders.length} commandes</span>
+          </div>
         </div>
       </div>
 
       {/* Orders Table */}
-      <div className="orders-table-container">
-        <table className="orders-table">
-          <thead>
-            <tr>
-              <th>N° Commande</th>
-              <th>Client</th>
-              <th>Date</th>
-              <th>Produit</th>
-              <th>Quantité</th>
-              <th>Type</th>
-              <th>Couleurs</th>
-              <th>Statut</th>
-              <th>Priorité</th>
-              <th>Prix</th>
-              <th>Responsable</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredOrders.map((order) => (
-              <tr key={order.id}>
-                <td className="order-id">{order.id}</td>
-                <td>
-                  <div className="client-cell">
-                    <div className="client-avatar">
-                      {order.client.charAt(0)}
-                    </div>
-                    <span className="client-name">{order.client}</span>
-                  </div>
-                </td>
-                <td className="order-date">{order.date}</td>
-                <td className="order-product">{order.produit}</td>
-                <td className="order-quantity">{order.quantité}</td>
-                <td className="order-type">{order.type}</td>
-                <td className="order-colors">{order.couleurs}</td>
-                <td>{getStatusBadge(order.statut)}</td>
-                <td>{getPriorityBadge(order.priorité)}</td>
-                <td className="order-price">{order.prix}</td>
-                <td>
-                  <div className="responsible-cell">
-                    <span className="responsible-avatar">
-                      {getResponsibleAvatar(order.responsable)}
-                    </span>
-                    <span className="responsible-name">{order.responsable}</span>
-                  </div>
-                </td>
-                <td>
-                  <div className="action-buttons">
-                    <button className="action-btn view" title="Voir détails">
-                      👁️
+      <div className="orders-container">
+        {filteredOrders.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-icon">{Icons.orders}</div>
+            <h3>Aucune commande trouvée</h3>
+            <p>Créez votre première commande pour commencer</p>
+            <button className="btn btn-primary" onClick={handleNewOrder}>
+              {Icons.add} Créer une commande
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="table-responsive">
+              <table className="orders-table">
+                <thead>
+                  <tr>
+                    <th>ID Commande</th>
+                    <th>Client</th>
+                    <th>Produit</th>
+                    <th>Quantité</th>
+                    <th>Statut</th>
+                    <th>Date Livraison</th>
+                    <th>Montant</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {currentOrders.map((order) => (
+                    <tr key={order.id} className="order-row" onClick={() => handleViewOrder(order.id)}>
+                      <td className="order-id">
+                        <span className="id-badge">CMD-{order.id.toString().padStart(3, '0')}</span>
+                      </td>
+                      <td className="client-cell">
+                        <div className="client-info">
+                          <span className="client-icon">{Icons.customer}</span>
+                          <span className="client-name">{order.client}</span>
+                        </div>
+                      </td>
+                      <td className="product-cell">
+                        <div className="product-info">
+                          <span className="product-icon">{Icons.product}</span>
+                          <span>{order.product}</span>
+                        </div>
+                      </td>
+                      <td className="quantity-cell">
+                        <span className="quantity-badge">
+                          {Icons.product} {order.quantity}
+                        </span>
+                      </td>
+                      <td className="status-cell">
+                        <span className={`status-tag ${getStatusColor(order.status)}`}>
+                          <span className="status-icon">{getStatusIcon(order.status)}</span>
+                          {order.status}
+                        </span>
+                      </td>
+                      <td className="deadline-cell">
+                        <span className={`deadline ${order.status === 'termine' ? 'delivered' : 'pending'}`}>
+                          {Icons.calendar} {order.deadline}
+                        </span>
+                      </td>
+                      <td className="amount-cell">
+                        <span className="amount">{order.amount}</span>
+                      </td>
+                      <td className="actions-cell">
+                        <div className="actions-buttons" onClick={(e) => e.stopPropagation()}>
+                          <button 
+                            className="action-btn view-btn"
+                            onClick={() => handleViewOrder(order.id)}
+                            title="Voir détails"
+                          >
+                            {ActionIcons.view}
+                          </button>
+                          <button 
+                            className="action-btn edit-btn"
+                            onClick={() => handleViewOrder(order.id)}
+                            title="Modifier"
+                          >
+                            {ActionIcons.edit}
+                          </button>
+                          <button 
+                            className="action-btn print-btn"
+                            onClick={() => window.print()}
+                            title="Imprimer"
+                          >
+                            {ActionIcons.print}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="pagination">
+                <button 
+                  className="pagination-btn prev-btn"
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                >
+                  {Icons.arrowLeft} Précédent
+                </button>
+                
+                <div className="page-numbers">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                    <button
+                      key={page}
+                      className={`page-btn ${currentPage === page ? 'active' : ''}`}
+                      onClick={() => setCurrentPage(page)}
+                    >
+                      {page}
                     </button>
-                    <button className="action-btn edit" title="Modifier">
-                      ✏️
-                    </button>
-                    <button className="action-btn print" title="Bon d'impression">
-                      🖨️
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                  ))}
+                </div>
+                
+                <button 
+                  className="pagination-btn next-btn"
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                >
+                  Suivant {Icons.arrowRight}
+                </button>
+              </div>
+            )}
+          </>
+        )}
       </div>
 
-      {/* Order Summary */}
-      <div className="order-summary">
-        <div className="summary-card">
-          <div className="summary-icon">📊</div>
-          <div className="summary-content">
-            <div className="summary-title">Résumé du Mois</div>
-            <div className="summary-stats">
-              <div className="summary-stat">
-                <span className="stat-label">Commandes totales :</span>
-                <span className="stat-value">24</span>
-              </div>
-              <div className="summary-stat">
-                <span className="stat-label">Chiffre d'affaires :</span>
-                <span className="stat-value">42M Ar</span>
-              </div>
-              <div className="summary-stat">
-                <span className="stat-label">Moyenne/commande :</span>
-                <span className="stat-value">1.75M Ar</span>
-              </div>
-            </div>
+      {/* Quick Stats */}
+      <div className="quick-stats">
+        <div className="stat-card">
+          <div className="stat-icon">{Icons.pending}</div>
+          <div className="stat-content">
+            <div className="stat-value">3</div>
+            <div className="stat-label">En attente</div>
           </div>
         </div>
-        
-        <div className="summary-card">
-          <div className="summary-icon">🎯</div>
-          <div className="summary-content">
-            <div className="summary-title">Objectifs de la Semaine</div>
-            <div className="summary-progress">
-              <div className="progress-bar">
-                <div className="progress-fill" style={{ width: '75%' }}></div>
-              </div>
-              <div className="progress-text">15/20 commandes terminées</div>
-            </div>
+        <div className="stat-card">
+          <div className="stat-icon">{Icons.inProgress}</div>
+          <div className="stat-content">
+            <div className="stat-value">2</div>
+            <div className="stat-label">En production</div>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-icon">{Icons.success}</div>
+          <div className="stat-content">
+            <div className="stat-value">2</div>
+            <div className="stat-label">Terminées</div>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-icon">{Icons.revenue}</div>
+          <div className="stat-content">
+            <div className="stat-value">2.9M Ar</div>
+            <div className="stat-label">Chiffre total</div>
           </div>
         </div>
       </div>
