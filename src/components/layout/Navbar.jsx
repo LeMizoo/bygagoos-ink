@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import './Navbar.css';
 
-const Navbar = ({ onMenuClick }) => {
+const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user, logout, isAuthenticated, checkTokenExists } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -25,7 +25,6 @@ const Navbar = ({ onMenuClick }) => {
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
-    if (onMenuClick) onMenuClick();
   };
 
   const closeMobileMenu = () => {

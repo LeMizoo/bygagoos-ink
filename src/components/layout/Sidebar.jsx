@@ -3,71 +3,60 @@ import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import './Sidebar.css';
 
-const Sidebar = ({ isOpen, onClose }) => {
+const Sidebar = () => {
   const { user } = useAuth();
 
-  // Toutes les pages fonctionnelles maintenant
   const menuItems = [
     { 
       path: '/app/dashboard', 
       icon: '📊', 
       label: 'Tableau de bord',
-      badge: null
     },
     { 
       path: '/app/orders', 
       icon: '📋', 
       label: 'Commandes',
-      badge: 5
     },
     { 
       path: '/app/orders/new', 
       icon: '➕', 
       label: 'Nouvelle Commande',
-      badge: null,
       isAction: true
     },
     { 
       path: '/app/clients', 
       icon: '👥', 
       label: 'Clients',
-      badge: 12
     },
     { 
       path: '/app/production', 
       icon: '🏭', 
       label: 'Équipe Production',
-      badge: null
     },
     { 
       path: '/app/stock', 
       icon: '📦', 
       label: 'Gestion du Stock',
-      badge: '3'
     },
     { 
       path: '/app/calendar', 
       icon: '📅', 
       label: 'Calendrier',
-      badge: '8'
     },
     { 
       path: '/app/documents', 
       icon: '📄', 
       label: 'Documents',
-      badge: null
     },
     { 
       path: '/app/logistics', 
       icon: '🚚', 
       label: 'Logistique',
-      badge: '2'
     },
     { 
       path: '/app/accounting', 
       icon: '💰', 
       label: 'Comptabilité',
-      badge: '4'
     },
   ];
 
@@ -76,24 +65,20 @@ const Sidebar = ({ isOpen, onClose }) => {
       path: '/app/profile', 
       icon: '👤', 
       label: 'Mon Profil',
-      badge: null
     },
     { 
       path: '/app/settings', 
       icon: '⚙️', 
       label: 'Paramètres',
-      badge: null
     },
     { 
       path: '/family', 
       icon: '🏡', 
       label: 'Page Familiale Publique',
-      badge: null,
       isPublic: true
     },
   ];
 
-  // Fonction pour obtenir les initiales de l'utilisateur
   const getUserInitials = () => {
     if (user?.name) {
       return user.name
@@ -106,7 +91,6 @@ const Sidebar = ({ isOpen, onClose }) => {
     return 'BY';
   };
 
-  // Fonction pour obtenir le rôle formaté
   const getUserRole = () => {
     if (user?.role) {
       const roles = {
@@ -122,7 +106,7 @@ const Sidebar = ({ isOpen, onClose }) => {
   };
 
   return (
-    <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
+    <aside className="sidebar">
       {/* En-tête avec logo et utilisateur */}
       <div className="sidebar-header">
         <div className="sidebar-brand">
@@ -165,15 +149,9 @@ const Sidebar = ({ isOpen, onClose }) => {
                   className={({ isActive }) =>
                     `nav-link ${isActive ? 'active' : ''}`
                   }
-                  onClick={onClose}
                 >
                   <span className="nav-icon">{item.icon}</span>
                   <span className="nav-label">{item.label}</span>
-                  {item.badge && (
-                    <span className="nav-badge">
-                      {item.badge}
-                    </span>
-                  )}
                   {item.isAction && (
                     <span className="action-indicator"></span>
                   )}
@@ -197,18 +175,13 @@ const Sidebar = ({ isOpen, onClose }) => {
                   className={({ isActive }) =>
                     `nav-link ${isActive ? 'active' : ''}`
                   }
-                  onClick={onClose}
                   target={item.isPublic ? '_blank' : '_self'}
                 >
                   <span className="nav-icon">{item.icon}</span>
                   <span className="nav-label">{item.label}</span>
                   {item.isPublic && (
                     <span className="external-indicator">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        <polyline points="15 3 21 3 21 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        <line x1="10" y1="14" x2="21" y2="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
+                      ↗️
                     </span>
                   )}
                 </NavLink>
@@ -220,54 +193,12 @@ const Sidebar = ({ isOpen, onClose }) => {
 
       {/* Pied de page */}
       <div className="sidebar-footer">
-        {/* Statut atelier */}
-        <div className="atelier-status-card">
-          <div className="status-header">
-            <span className="status-icon">🏭</span>
-            <div className="status-info">
-              <div className="status-title">Atelier ByGagoos</div>
-              <div className="status-subtitle">Statut actuel</div>
-            </div>
-          </div>
-          <div className="status-content">
-            <div className="status-item">
-              <span className="item-label">Ouverture:</span>
-              <span className="item-value">07h00 - 17h00</span>
-            </div>
-            <div className="status-item">
-              <span className="item-label">Équipe:</span>
-              <span className="item-value">4/4 présents</span>
-            </div>
-            <div className="status-item">
-              <span className="item-label">Commandes:</span>
-              <span className="item-value value-active">5 en cours</span>
-            </div>
-          </div>
-          <div className="status-indicator">
-            <span className="indicator-dot online"></span>
-            <span className="indicator-text">Atelier ouvert</span>
-          </div>
-        </div>
-
-        {/* Version et déconnexion */}
+        {/* Version */}
         <div className="footer-bottom">
           <div className="version-info">
             <span className="version-icon">🔄</span>
             <span className="version-text">Version 1.0.0</span>
           </div>
-          
-          <button 
-            className="logout-btn"
-            onClick={() => {
-              // Gérer la déconnexion ici
-              localStorage.removeItem('family_token');
-              localStorage.removeItem('user');
-              window.location.href = '/';
-            }}
-          >
-            <span className="logout-icon">🚪</span>
-            <span className="logout-text">Déconnexion</span>
-          </button>
         </div>
       </div>
     </aside>

@@ -26,17 +26,17 @@ const AppLayout = () => {
 
   return (
     <div className="app-container">
-      <Navbar onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
+      <Navbar />
       <div className="app-main">
-        <Sidebar 
-          isOpen={isSidebarOpen}
-          onClose={() => setIsSidebarOpen(false)}
-        />
+        {/* Sidebar uniquement sur desktop */}
+        <div className="desktop-sidebar">
+          <Sidebar />
+        </div>
         
-        {/* Overlay pour mobile */}
+        {/* Menu mobile overlay */}
         {isSidebarOpen && (
           <div 
-            className="sidebar-overlay"
+            className="mobile-menu-overlay"
             onClick={() => setIsSidebarOpen(false)}
           />
         )}
