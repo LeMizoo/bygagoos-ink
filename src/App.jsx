@@ -28,18 +28,31 @@ const AppLayout = () => {
     <div className="app-container">
       <Navbar />
       <div className="app-main">
-        {/* Sidebar uniquement sur desktop */}
-        <div className="desktop-sidebar">
-          <Sidebar />
+        {/* Bouton pour ouvrir la sidebar sur mobile */}
+        <button 
+          className="sidebar-toggle-mobile"
+          onClick={() => setIsSidebarOpen(true)}
+          aria-label="Ouvrir le menu"
+        >
+          ☰
+        </button>
+
+        {/* Sidebar */}
+        <div className="sidebar-container">
+          <div className={`sidebar-overlay ${isSidebarOpen ? 'active' : ''}`} 
+               onClick={() => setIsSidebarOpen(false)} />
+          
+          <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
+            <button 
+              className="sidebar-close-mobile"
+              onClick={() => setIsSidebarOpen(false)}
+              aria-label="Fermer le menu"
+            >
+              ✕
+            </button>
+            <Sidebar onClose={() => setIsSidebarOpen(false)} />
+          </aside>
         </div>
-        
-        {/* Menu mobile overlay */}
-        {isSidebarOpen && (
-          <div 
-            className="mobile-menu-overlay"
-            onClick={() => setIsSidebarOpen(false)}
-          />
-        )}
         
         <main className="app-content">
           <div className="content-container">
