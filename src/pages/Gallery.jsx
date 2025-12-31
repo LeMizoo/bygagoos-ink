@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import './Gallery.css';
 
-// Import simple sans imports d'images
-import { getImageUrl } from '../utils/imageHelper';
-
+// IMPORTANT : Utilisez des chemins DIRECTS au lieu de getImageUrl()
 const Gallery = () => {
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState('all');
@@ -12,8 +10,41 @@ const Gallery = () => {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [galleryImages, setGalleryImages] = useState([]);
   const [loading, setLoading] = useState(true);
-  
-  // ÉQUIPE FAMILIALE AVEC INFORMATIONS EXACTES
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  /* ==========================
+     SLIDER INAUGURATION - Chemins DIRECTS
+  ========================== */
+  const inaugurationSlides = [
+    {
+      id: 1,
+      title: "Inauguration officielle",
+      subtitle: "ByGagoos Ink ouvre ses portes",
+      text: "Une entreprise familiale malgache dédiée à la sérigraphie textile sur mesure.",
+      date: "18 mai 2025 • Madagascar 🇲🇬",
+      image: "/inauguration.jpg" // CHEMIN DIRECT
+    },
+    {
+      id: 2,
+      title: "Une aventure familiale",
+      subtitle: "Passion & savoir-faire",
+      text: "Chaque création est portée par l'expertise, la créativité et l'amour du métier.",
+      date: "Depuis 2025",
+      image: "/team-family.jpg" // CHEMIN DIRECT
+    },
+    {
+      id: 3,
+      title: "Création textile",
+      subtitle: "Qualité & identité",
+      text: "Nous transformons vos idées en impressions textiles uniques.",
+      date: "Made in Madagascar 🇲🇬",
+      image: "/production/atelier-serigraphie.jpg" // CHEMIN DIRECT
+    }
+  ];
+
+  /* ==========================
+     ÉQUIPE FAMILIALE - Chemins DIRECTS
+  ========================== */
   const teamMembers = [
     {
       id: 1,
@@ -23,7 +54,7 @@ const Gallery = () => {
       phone: '+261 34 43 593 30',
       role: 'Fondateur & Structure',
       description: 'Responsable de la vision stratégique et de la structure de l\'entreprise',
-      image: getImageUrl('tovoniaina'), // Utilisation du helper
+      image: '/profiles/tovoniaina.jpg', // CHEMIN DIRECT
       emoji: '👨‍💻',
       category: 'team'
     },
@@ -35,7 +66,7 @@ const Gallery = () => {
       phone: '',
       role: 'Direction Générale - Inspiration & Créativité',
       description: 'Dirige l\'inspiration artistique et la créativité de l\'entreprise',
-      image: getImageUrl('volatiana'), // Utilisation du helper
+      image: '/profiles/volatiana.jpg', // CHEMIN DIRECT
       emoji: '🎨',
       category: 'team'
     },
@@ -47,7 +78,7 @@ const Gallery = () => {
       phone: '',
       role: 'Direction des Opérations - Création & Design',
       description: 'Gère la production, la création et le design des collections',
-      image: getImageUrl('miantsatiana'), // Utilisation du helper
+      image: '/profiles/miantsatiana.jpg', // CHEMIN DIRECT
       emoji: '👩‍🔧',
       category: 'team'
     },
@@ -59,13 +90,12 @@ const Gallery = () => {
       phone: '',
       role: 'Direction Administrative - Communication & Relations',
       description: 'Responsable de la communication, administration et relations clients',
-      image: getImageUrl('tiaFaniry'), // Utilisation du helper
+      image: '/profiles/tia-faniry.jpg', // CHEMIN DIRECT
       emoji: '💼',
       category: 'team'
     }
   ];
 
-  // CATÉGORIES D'IMAGES
   const imageCategories = {
     all: 'Toutes les images',
     team: 'L\'Équipe Familiale',
@@ -73,20 +103,24 @@ const Gallery = () => {
     creations: 'Nos Créations',
     events: 'Événements'
   };
-  
-  // Détecter le défilement pour afficher le bouton retour en haut
-  useEffect(() => {
-    const handleScroll = () => {
-      setShowScrollTop(window.scrollY > 400);
-    };
 
+  useEffect(() => {
+    // Autoplay du slider
+    const interval = setInterval(() => {
+      setCurrentSlide(prev =>
+        prev === inaugurationSlides.length - 1 ? 0 : prev + 1
+      );
+    }, 5000);
+    
+    // Gestion du scroll
+    const handleScroll = () => setShowScrollTop(window.scrollY > 400);
     window.addEventListener('scroll', handleScroll);
     
-    // Charger les images
+    // Charger les images de la galerie - VERSION SIMPLIFIÉE
     const loadImages = () => {
       try {
         const galleryImagesList = [
-          // Équipe familiale avec vraies informations
+          // Équipe familiale
           ...teamMembers.map(member => ({
             id: member.id,
             url: member.image,
@@ -101,11 +135,11 @@ const Gallery = () => {
             emoji: member.emoji
           })),
           
-          // Production
+          // Production - UNIQUEMENT les images qui existent
           {
             id: 5,
-            url: getImageUrl('atelierSerigraphie'),
-            thumbnail: getImageUrl('atelierSerigraphie'),
+            url: '/production/atelier-serigraphie.jpg',
+            thumbnail: '/production/atelier-serigraphie.jpg',
             title: 'Notre Atelier',
             category: 'production',
             description: 'Espace de création où la magie opère',
@@ -113,8 +147,8 @@ const Gallery = () => {
           },
           {
             id: 6,
-            url: getImageUrl('equipeSerigraphie'),
-            thumbnail: getImageUrl('equipeSerigraphie'),
+            url: '/production/equipe-serigraphie.jpg',
+            thumbnail: '/production/equipe-serigraphie.jpg',
             title: 'Équipe en Action',
             category: 'production',
             description: 'Précision et expertise à chaque étape',
@@ -122,8 +156,8 @@ const Gallery = () => {
           },
           {
             id: 7,
-            url: getImageUrl('marcelProd'),
-            thumbnail: getImageUrl('marcelProd'),
+            url: '/production/marcel-prod.jpg',
+            thumbnail: '/production/marcel-prod.jpg',
             title: 'Expertise Technique',
             category: 'production',
             description: 'Maitrise des techniques avancées',
@@ -133,8 +167,8 @@ const Gallery = () => {
           // Images générales
           {
             id: 8,
-            url: getImageUrl('teamFamily'),
-            thumbnail: getImageUrl('teamFamily'),
+            url: '/team-family.jpg',
+            thumbnail: '/team-family.jpg',
             title: 'L\'Esprit Familial',
             category: 'team',
             description: 'Plus qu\'une entreprise, une famille',
@@ -142,8 +176,8 @@ const Gallery = () => {
           },
           {
             id: 9,
-            url: getImageUrl('inauguration'),
-            thumbnail: getImageUrl('inauguration'),
+            url: '/inauguration.jpg',
+            thumbnail: '/inauguration.jpg',
             title: 'Inauguration Officielle',
             category: 'events',
             description: '18 mai 2025 - Début de notre aventure',
@@ -151,33 +185,15 @@ const Gallery = () => {
           },
           {
             id: 10,
-            url: getImageUrl('logo'),
-            thumbnail: getImageUrl('logo'),
+            url: '/logo.png',
+            thumbnail: '/logo.png',
             title: 'Notre Identité',
             category: 'creations',
             description: 'Logo ByGagoos Ink',
             details: 'Design : Miantsa, 2025'
           },
           
-          // Images supplémentaires de production
-          {
-            id: 11,
-            url: getImageUrl('equipeProd02'),
-            thumbnail: getImageUrl('equipeProd02'),
-            title: 'Production en Cours',
-            category: 'production',
-            description: 'Notre équipe à l\'œuvre',
-            details: 'Contrôle qualité minutieux'
-          },
-          {
-            id: 12,
-            url: getImageUrl('marcelinProd'),
-            thumbnail: getImageUrl('marcelinProd'),
-            title: 'Expert Sérigraphie',
-            category: 'production',
-            description: 'Technicien spécialisé',
-            details: 'Expérience confirmée'
-          }
+          // SUPPRIMÉ : Les images qui n'existent pas (equipeProd02, etc.)
         ];
         
         setGalleryImages(galleryImagesList);
@@ -188,14 +204,14 @@ const Gallery = () => {
       }
     };
     
-    // Charger immédiatement
     loadImages();
     
-    // Nettoyer l'événement
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, []);
 
-  // Filtrer les images par catégorie
   const filteredImages = activeCategory === 'all' 
     ? galleryImages 
     : galleryImages.filter(img => img.category === activeCategory);
@@ -218,7 +234,6 @@ const Gallery = () => {
     }
   };
 
-  // Fonction pour remonter en haut
   const scrollToTop = () => {
     window.scrollTo({
       top: 0,
@@ -226,7 +241,6 @@ const Gallery = () => {
     });
   };
 
-  // Fonction pour remonter en haut de la section
   const scrollToSection = (sectionId) => {
     const section = document.getElementById(sectionId);
     if (section) {
@@ -244,7 +258,7 @@ const Gallery = () => {
           <div className="hero-content">
             <div className="logo-display">
               <img 
-                src={getImageUrl('logo')}
+                src="/logo.png" // CHEMIN DIRECT
                 alt="ByGagoos Ink Logo" 
                 className="hero-logo"
               />
@@ -279,6 +293,37 @@ const Gallery = () => {
           <span className="hero-arrow-icon">⬇️</span>
         </div>
       </header>
+
+      {/* SLIDER INAUGURATION */}
+      <section className="inauguration-slider">
+        <div className="slider-wrapper">
+          {inaugurationSlides.map((slide, index) => (
+            <div
+              key={slide.id}
+              className={`slide ${index === currentSlide ? "active" : ""}`}
+              style={{ backgroundImage: `url(${slide.image})` }}
+            >
+              <div className="slide-overlay">
+                <span className="slide-badge">🎉 Inauguration</span>
+                <h2 className="slide-title">{slide.title}</h2>
+                <h3 className="slide-subtitle">{slide.subtitle}</h3>
+                <p className="slide-text">{slide.text}</p>
+                <p className="slide-date">{slide.date}</p>
+              </div>
+            </div>
+          ))}
+
+          <div className="slider-dots">
+            {inaugurationSlides.map((_, index) => (
+              <button
+                key={index}
+                className={`dot ${index === currentSlide ? "active" : ""}`}
+                onClick={() => setCurrentSlide(index)}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* MAIN CONTENT */}
       <main className="gallery-main">
@@ -503,7 +548,7 @@ const Gallery = () => {
           <div className="footer-content">
             <div className="footer-brand">
               <img 
-                src={getImageUrl('logo')}
+                src="/logo.png"
                 alt="ByGagoos Ink" 
                 className="footer-logo"
               />

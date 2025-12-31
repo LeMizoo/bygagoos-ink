@@ -1,299 +1,568 @@
-import React from 'react';
+import React, { useContext, useEffect, useState, useMemo } from 'react';
+import { AuthContext } from '../context/AuthContext';
 import './Dashboard.css';
 
 const Dashboard = () => {
-  const stats = [
+  const { user } = useContext(AuthContext);
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isMobile, setIsMobile] = useState(false);
+  
+  // État pour la pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+
+  // Détecter la taille de l'écran
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Commandes de démo
+  const allOrders = useMemo(() => [
+    { id: 'BG-1245', client: 'Boutique MadaStyle', produit: 'T-shirts logo', quantité: '150', statut: 'Impression', délai: '2 jours' },
+    { id: 'BG-1244', client: 'École Les Petits Génies', produit: 'Polos scolaire', quantité: '300', statut: 'Séchage', délai: '3 jours' },
+    { id: 'BG-1243', client: 'Restaurant La Terrasse', produit: 'Tabliers staff', quantité: '25', statut: 'Terminé', délai: 'Livré' },
+    { id: 'BG-1242', client: 'Startup TechMG', produit: 'Sweatshirts', quantité: '80', statut: 'Design', délai: '5 jours' },
+    { id: 'BG-1241', client: 'Hôtel Tropical', produit: 'Uniforme staff', quantité: '45', statut: 'Séchage', délai: '1 jour' },
+    { id: 'BG-1240', client: 'Club Sportif', produit: 'Maillots équipe', quantité: '120', statut: 'Terminé', délai: 'Livré' },
+    { id: 'BG-1239', client: 'Université MG', produit: 'Sweatshirts promotion', quantité: '200', statut: 'Impression', délai: '4 jours' },
+    { id: 'BG-1238', client: 'Café Artisanal', produit: 'Tabliers barista', quantité: '30', statut: 'Terminé', délai: 'Livré' },
+    { id: 'BG-1237', client: 'Association Sportive', produit: 'T-shirts événement', quantité: '180', statut: 'Séchage', délai: '2 jours' },
+    { id: 'BG-1236', client: 'Entreprise Tech', produit: 'Pulls corporate', quantité: '75', statut: 'Design', délai: '6 jours' },
+  ], []);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Données de démo
+      const demoStats = {
+        totalRevenue: 8500000,
+        totalOrders: 24,
+        newClients: 12,
+        stockLevel: 85,
+        pendingOrders: 8,
+        completedOrders: 12,
+        activeClients: 42,
+        lowStockItems: 3,
+        monthlyGrowth: 12.5,
+      };
+      
+      setStats(demoStats);
+    } catch (err) {
+      console.error('Erreur chargement dashboard:', err);
+      setError('Impossible de charger les données');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Calculs pour la pagination
+  const totalOrders = allOrders.length;
+  const totalPages = Math.ceil(totalOrders / rowsPerPage);
+  
+  const indexOfLastOrder = currentPage * rowsPerPage;
+  const indexOfFirstOrder = indexOfLastOrder - rowsPerPage;
+  const currentOrders = allOrders.slice(indexOfFirstOrder, indexOfLastOrder);
+
+  // Gestionnaires de pagination
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleRowsPerPageChange = (e) => {
+    setRowsPerPage(parseInt(e.target.value));
+    setCurrentPage(1);
+  };
+
+  // Pour mobile: version réduite du tableau
+  const MobileOrderCard = ({ order }) => (
+    <div className="mobile-order-card">
+      <div className="mobile-order-header">
+        <span className="mobile-order-id">#{order.id}</span>
+        <span className={`mobile-order-status status-${getStatusClass(order.statut)}`}>
+          {order.statut}
+        </span>
+      </div>
+      <div className="mobile-order-client">{order.client}</div>
+      <div className="mobile-order-details">
+        <div className="mobile-order-detail">
+          <span className="detail-label">Produit:</span>
+          <span className="detail-value">{order.produit}</span>
+        </div>
+        <div className="mobile-order-detail">
+          <span className="detail-label">Quantité:</span>
+          <span className="detail-value quantity">{order.quantité}</span>
+        </div>
+        <div className="mobile-order-detail">
+          <span className="detail-label">Délai:</span>
+          <span className={`detail-value deadline ${getDeadlineClass(order.délai)}`}>
+            {order.délai}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Fonction pour déterminer la classe CSS du statut
+  const getStatusClass = (statut) => {
+    const statutLower = statut.toLowerCase();
+    if (statutLower.includes('impression')) return 'impression';
+    if (statutLower.includes('séchage')) return 'sechage';
+    if (statutLower.includes('terminé') || statutLower.includes('livré')) return 'termine';
+    if (statutLower.includes('design')) return 'design';
+    return 'default';
+  };
+
+  // Fonction pour déterminer la classe CSS du délai
+  const getDeadlineClass = (delai) => {
+    if (delai.toLowerCase() === 'livré') return 'delivered';
+    return 'pending';
+  };
+
+  if (loading) {
+    return (
+      <div className="dashboard-loading">
+        <div className="loading-spinner-large"></div>
+        <p>Chargement du tableau de bord...</p>
+      </div>
+    );
+  }
+
+  if (error && !stats) {
+    return (
+      <div className="dashboard-error">
+        <div className="error-icon">⚠️</div>
+        <h3>Erreur de chargement</h3>
+        <p>{error}</p>
+        <button onClick={fetchDashboardData} className="btn-retry">
+          Réessayer
+        </button>
+      </div>
+    );
+  }
+
+  const dashboardStats = [
     { 
       label: 'Commandes en cours', 
-      value: '24', 
+      value: stats?.pendingOrders || 8, 
       change: '+3 cette semaine', 
       icon: '🖨️', 
       color: '#4cc9f0',
-      detail: 'Dont 8 urgentes'
+      detail: '8 urgentes'
     },
     { 
       label: 'Clients Actifs', 
-      value: '42', 
+      value: stats?.activeClients || 42, 
       change: '+2 nouveaux', 
       icon: '👔', 
       color: '#4361ee',
-      detail: '12 entreprises, 30 particuliers'
+      detail: '42 clients'
     },
     { 
-      label: 'Chiffre d\'affaires mensuel', 
-      value: '8.5M Ar', 
-      change: '+15%', 
+      label: 'Chiffre d\'affaires', 
+      value: stats?.totalRevenue ? `${(stats.totalRevenue / 1000000).toFixed(1)}M Ar` : '8.5M Ar', 
+      change: stats?.monthlyGrowth ? `+${stats.monthlyGrowth}%` : '+15%', 
       icon: '💰', 
       color: '#ffd166',
       detail: '≈ 1 700€'
     },
     { 
-      label: 'Taux de satisfaction', 
+      label: 'Satisfaction', 
       value: '98%', 
       change: '+2%', 
       icon: '⭐', 
       color: '#06d6a0',
-      detail: '32 avis ce mois'
+      detail: '32 avis'
     },
   ];
 
-  const recentOrders = [
-    { id: '#BG-1245', client: 'Boutique MadaStyle', produit: 'T-shirts logo', quantité: '150', statut: 'Impression', délai: '2 jours' },
-    { id: '#BG-1244', client: 'École Les Petits Génies', produit: 'Polos scolaire', quantité: '300', statut: 'Séchage', délai: '3 jours' },
-    { id: '#BG-1243', client: 'Restaurant La Terrasse', produit: 'Tabliers staff', quantité: '25', statut: 'Terminé', délai: 'Livré' },
-    { id: '#BG-1242', client: 'Startup TechMG', produit: 'Sweatshirts', quantité: '80', statut: 'Design', délai: '5 jours' },
+  const quickActions = [
+    { icon: '👥', title: 'Clients', description: 'Gérer les clients', link: '/app/clients' },
+    { icon: '🏭', title: 'Production', description: 'Suivi des commandes', link: '/app/production' },
+    { icon: '👨‍👩‍👧‍👦', title: 'Équipe', description: 'Voir l\'équipe', link: '/app/family' },
+    { icon: '📋', title: 'Commandes', description: 'Historique complet', link: '/app/orders' },
   ];
 
-  const productionQueue = [
-    { étape: 'Préparation écrans', quantité: '8 designs', responsable: 'Papa', avancement: '75%' },
-    { étape: 'Impression', quantité: '550 pièces', responsable: 'Maman', avancement: '60%' },
-    { étape: 'Séchage', quantité: '300 pièces', responsable: 'Junior', avancement: '40%' },
-    { étape: 'Emballage', quantité: '120 pièces', responsable: 'Soeur', avancement: '90%' },
+  const teamMembers = [
+    { name: 'Papa', role: 'Préparation écrans', status: 'online', avatar: '👨' },
+    { name: 'Maman', role: 'Impression', status: 'online', avatar: '👩' },
+    { name: 'Junior', role: 'Séchage', status: 'online', avatar: '👦' },
+    { name: 'Soeur', role: 'Emballage', status: 'offline', avatar: '👧' },
   ];
 
-  const stockAlert = [
-    { produit: 'Encre noire', niveau: 'Faible', quantité: '2L', action: 'Commander' },
-    { produit: 'T-shirts Blancs L', niveau: 'Critique', quantité: '15', action: 'Urgent' },
-    { produit: 'Cadres 40x60', niveau: 'Normal', quantité: '8', action: 'Surveiller' },
+  const alerts = [
+    { type: 'stock', message: 'Encre noir bas (2L restant)', priority: 'high' },
+    { type: 'order', message: '#BG-1245 à expédier', priority: 'medium' },
+    { type: 'maintenance', message: 'Machine 2 entretien', priority: 'low' },
   ];
 
   return (
-    <div className="dashboard">
-      <div className="dashboard-header">
-        <div>
-          <h1>Tableau de Bord Atelier</h1>
-          <p className="dashboard-subtitle">ByGagoos Ink • Sérigraphie Textile Familiale</p>
-        </div>
-        <div className="header-actions">
-          <div className="atelier-info">
-            <span className="info-icon">🏭</span>
-            <div className="info-text">
-              <span className="info-status">Atelier ouvert</span>
-              <span className="info-location">Antananarivo, Madagascar</span>
-            </div>
+    <div className="dashboard-container">
+      {/* Header Section - Optimisé mobile */}
+      <div className="dashboard-header-section">
+        <div className="header-content">
+          <h1 className="dashboard-title">
+            {isMobile ? 'Tableau de Bord' : 'Tableau de Bord Atelier'}
+          </h1>
+          <p className="dashboard-subtitle">
+            {isMobile ? 'ByGagoos Ink' : 'ByGagoos Ink • Sérigraphie Textile Familiale'}
+          </p>
+          <div className="welcome-section">
+            <span className="welcome-text">Bienvenue,</span>
+            <span className="user-name">
+              {isMobile ? (user?.name?.split(' ')[0] || 'Famille') : (user?.name || 'Membre de la famille')}
+            </span>
+            <span className="user-role">({user?.role || 'admin'})</span>
           </div>
-          <button className="action-btn primary">
-            <span className="btn-icon">➕</span>
-            Nouvelle Commande
+        </div>
+        
+        <div className="header-actions-section">
+          <div className="status-indicator">
+            <span className="status-dot online"></span>
+            <span className="status-text">
+              {isMobile ? 'Ouvert' : 'Atelier ouvert'}
+            </span>
+          </div>
+          <button 
+            className="btn-primary-action"
+            onClick={() => window.location.href = '/app/orders/new'}
+          >
+            {isMobile ? (
+              <span className="btn-icon">➕</span>
+            ) : (
+              <>
+                <span className="btn-icon">➕</span>
+                Nouvelle Commande
+              </>
+            )}
           </button>
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="stats-grid">
-        {stats.map((stat, index) => (
-          <div key={index} className="stat-card">
-            <div className="stat-header">
-              <div 
-                className="stat-icon"
-                style={{ backgroundColor: `${stat.color}20` }}
-              >
-                <span style={{ color: stat.color }}>{stat.icon}</span>
+      {/* Stats Section - Optimisé mobile */}
+      <div className="stats-section">
+        <h2 className="section-title">
+          {isMobile ? '📊 Performances' : '📊 Aperçu des performances'}
+        </h2>
+        <div className="stats-grid">
+          {dashboardStats.map((stat, index) => (
+            <div key={index} className="stat-card" style={{ '--stat-color': stat.color }}>
+              <div className="stat-card-inner">
+                <div className="stat-icon-container">
+                  <span className="stat-icon" style={{ color: stat.color }}>{stat.icon}</span>
+                </div>
+                <div className="stat-content">
+                  <div className="stat-value">{stat.value}</div>
+                  <div className="stat-label">
+                    {isMobile ? stat.label.split(' ')[0] : stat.label}
+                  </div>
+                  <div className="stat-change-container">
+                    <span className={`stat-change ${stat.change.includes('+') ? 'positive' : 'negative'}`}>
+                      {stat.change}
+                    </span>
+                    {!isMobile && stat.detail && (
+                      <span className="stat-detail">{stat.detail}</span>
+                    )}
+                  </div>
+                </div>
               </div>
-              <div className="stat-change">{stat.change}</div>
             </div>
-            <div className="stat-value">{stat.value}</div>
-            <div className="stat-label">{stat.label}</div>
-            {stat.detail && (
-              <div className="stat-detail">{stat.detail}</div>
+          ))}
+        </div>
+      </div>
+
+      {/* Dashboard Content Grid */}
+      <div className="dashboard-content-grid">
+        {/* Left Column - Main Content */}
+        <div className="main-content-column">
+          {/* Recent Orders Card - Version mobile/desktop */}
+          <div className="content-card">
+            <div className="card-header">
+              <h3 className="card-title">
+                <span className="card-icon">🖨️</span>
+                {isMobile ? 'Commandes' : 'Commandes Récentes'}
+                <span className="total-orders-badge">{totalOrders}</span>
+              </h3>
+              <a href="/app/orders" className="view-all-link">
+                {isMobile ? 'Tout →' : 'Voir tout →'}
+              </a>
+            </div>
+            
+            {isMobile ? (
+              // Version mobile: cartes au lieu de tableau
+              <div className="mobile-orders-list">
+                {currentOrders.map((order, index) => (
+                  <MobileOrderCard key={index} order={order} />
+                ))}
+              </div>
+            ) : (
+              // Version desktop: tableau
+              <>
+                <div className="table-responsive-container">
+                  <div className="table-wrapper">
+                    <table className="dashboard-table">
+                      <thead>
+                        <tr>
+                          <th className="table-header">N° Commande</th>
+                          <th className="table-header">Client</th>
+                          <th className="table-header">Produit</th>
+                          <th className="table-header">Quantité</th>
+                          <th className="table-header">Statut</th>
+                          <th className="table-header">Délai</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {currentOrders.map((order, index) => (
+                          <tr key={index} className="table-row">
+                            <td className="order-id-cell">
+                              <span className="order-id">#{order.id}</span>
+                            </td>
+                            <td className="client-cell">
+                              <div className="client-info">
+                                <span className="client-name">{order.client}</span>
+                              </div>
+                            </td>
+                            <td className="product-cell">
+                              <span className="product-text">{order.produit}</span>
+                            </td>
+                            <td className="quantity-cell">
+                              <span className="quantity-badge">{order.quantité}</span>
+                            </td>
+                            <td className="status-cell">
+                              <span className={`status-tag status-${getStatusClass(order.statut)}`}>
+                                {order.statut}
+                              </span>
+                            </td>
+                            <td className="deadline-cell">
+                              <span className={`deadline ${getDeadlineClass(order.délai)}`}>
+                                {order.délai}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Pagination Controls - Optimisé mobile */}
+            <div className="pagination-controls">
+              {!isMobile && (
+                <div className="pagination-info">
+                  <span>Affichage {indexOfFirstOrder + 1} à {Math.min(indexOfLastOrder, totalOrders)} sur {totalOrders}</span>
+                </div>
+              )}
+              
+              <div className="pagination-buttons">
+                <button 
+                  className="pagination-btn prev-btn"
+                  onClick={handlePreviousPage}
+                  disabled={currentPage === 1}
+                  aria-label="Page précédente"
+                >
+                  {isMobile ? '←' : '← Précédent'}
+                </button>
+                
+                <div className="page-indicator">
+                  <span className="current-page">{currentPage}</span>
+                  <span className="page-separator">/</span>
+                  <span className="total-pages">{totalPages}</span>
+                </div>
+                
+                <button 
+                  className="pagination-btn next-btn"
+                  onClick={handleNextPage}
+                  disabled={currentPage === totalPages}
+                  aria-label="Page suivante"
+                >
+                  {isMobile ? '→' : 'Suivant →'}
+                </button>
+              </div>
+              
+              <div className="rows-per-page-selector">
+                {!isMobile && <label htmlFor="rowsPerPage">Lignes:</label>}
+                <select 
+                  id="rowsPerPage"
+                  value={rowsPerPage}
+                  onChange={handleRowsPerPageChange}
+                  className="rows-select"
+                  aria-label="Nombre de lignes par page"
+                >
+                  <option value="5">5</option>
+                  <option value="10">10</option>
+                  {!isMobile && <option value="20">20</option>}
+                  {!isMobile && <option value="50">50</option>}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Actions - Optimisé mobile */}
+          <div className="content-card">
+            <div className="card-header">
+              <h3 className="card-title">
+                <span className="card-icon">⚡</span>
+                {isMobile ? 'Actions' : 'Actions Rapides'}
+              </h3>
+            </div>
+            
+            <div className="quick-actions-grid">
+              {quickActions.map((action, index) => (
+                <div 
+                  key={index} 
+                  className="quick-action-card"
+                  onClick={() => window.location.href = action.link}
+                >
+                  <div className="action-icon">{action.icon}</div>
+                  <div className="action-content">
+                    <h4 className="action-title">
+                      {isMobile ? action.title : action.title}
+                    </h4>
+                    {!isMobile && (
+                      <p className="action-description">{action.description}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column - Sidebar Content (caché sur mobile) */}
+        {!isMobile && (
+          <div className="sidebar-content-column">
+            {/* Team Online */}
+            <div className="content-card">
+              <div className="card-header">
+                <h3 className="card-title">
+                  <span className="card-icon">👨‍👩‍👧‍👦</span>
+                  Équipe en Ligne
+                </h3>
+              </div>
+              
+              <div className="team-list">
+                {teamMembers.map((member, index) => (
+                  <div key={index} className={`team-member ${member.status}`}>
+                    <div className="member-avatar">{member.avatar}</div>
+                    <div className="member-info">
+                      <div className="member-name">{member.name}</div>
+                      <div className="member-role">{member.role}</div>
+                    </div>
+                    <div className="member-status-indicator">
+                      <div className={`status-dot ${member.status}`}></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Alerts */}
+            <div className="content-card">
+              <div className="card-header">
+                <h3 className="card-title">
+                  <span className="card-icon">⚠️</span>
+                  Alertes
+                </h3>
+              </div>
+              
+              <div className="alerts-list">
+                {alerts.map((alert, index) => (
+                  <div key={index} className={`alert-item priority-${alert.priority}`}>
+                    <div className="alert-icon">
+                      {alert.type === 'stock' ? '📦' : 
+                       alert.type === 'order' ? '📋' : '🔧'}
+                    </div>
+                    <div className="alert-content">{alert.message}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Footer - Simplifié sur mobile */}
+      <div className="dashboard-footer">
+        <div className="footer-content">
+          <div className="company-info">
+            <span className="company-icon">👕</span>
+            <div className="company-text">
+              <strong>ByGagoos Ink</strong>
+              {!isMobile && (
+                <span>Sérigraphie Textile Familiale depuis 2010</span>
+              )}
+            </div>
+          </div>
+          {!isMobile && (
+            <div className="footer-stats">
+              <div className="footer-stat">
+                <span className="stat-value">98%</span>
+                <span className="stat-label">Satisfaction</span>
+              </div>
+              <div className="footer-stat">
+                <span className="stat-value">24%</span>
+                <span className="stat-label">Croissance</span>
+              </div>
+              <div className="footer-stat">
+                <span className="stat-value">42</span>
+                <span className="stat-label">Clients</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Menu mobile pour sidebar (équipe et alertes) */}
+      {isMobile && (
+        <div className="mobile-bottom-nav">
+          <div className="mobile-nav-item" onClick={() => window.location.href = '/app/family'}>
+            <span className="nav-icon">👨‍👩‍👧‍👦</span>
+            <span className="nav-label">Équipe</span>
+          </div>
+          <div className="mobile-nav-item" onClick={() => window.location.href = '/app/production'}>
+            <span className="nav-icon">🏭</span>
+            <span className="nav-label">Production</span>
+          </div>
+          <div className="mobile-nav-item" onClick={() => window.location.href = '/app/clients'}>
+            <span className="nav-icon">👥</span>
+            <span className="nav-label">Clients</span>
+          </div>
+          <div className="mobile-nav-item alerts-nav" onClick={() => {
+            // Afficher les alertes
+            alert(alerts.map(a => a.message).join('\n'));
+          }}>
+            <span className="nav-icon">⚠️</span>
+            <span className="nav-label">Alertes</span>
+            {alerts.length > 0 && (
+              <span className="alert-count">{alerts.length}</span>
             )}
           </div>
-        ))}
-      </div>
-
-      {/* Main Content */}
-      <div className="dashboard-content">
-        {/* Left Column */}
-        <div className="content-left">
-          {/* Commandes Récentes */}
-          <div className="content-card">
-            <div className="card-header">
-              <h3>🖨️ Commandes Récentes</h3>
-              <button className="view-all">Voir tout →</button>
-            </div>
-            <div className="orders-table">
-              <table>
-                <thead>
-                  <tr>
-                    <th>N° Commande</th>
-                    <th>Client</th>
-                    <th>Produit</th>
-                    <th>Quantité</th>
-                    <th>Statut</th>
-                    <th>Délai</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentOrders.map((order) => (
-                    <tr key={order.id}>
-                      <td className="order-id">{order.id}</td>
-                      <td className="client-name">{order.client}</td>
-                      <td className="product">{order.produit}</td>
-                      <td className="quantity">{order.quantité}</td>
-                      <td>
-                        <span className={`status-badge ${order.statut.toLowerCase()}`}>
-                          {order.statut}
-                        </span>
-                      </td>
-                      <td className="deadline">{order.délai}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Alertes Stock */}
-          <div className="content-card">
-            <div className="card-header">
-              <h3>⚠️ Alertes Stock</h3>
-              <button className="view-all">Gérer le stock →</button>
-            </div>
-            <div className="alerts-list">
-              {stockAlert.map((alert, index) => (
-                <div key={index} className={`alert-item ${alert.niveau.toLowerCase()}`}>
-                  <div className="alert-icon">
-                    {alert.niveau === 'Critique' ? '🔥' : 
-                     alert.niveau === 'Faible' ? '⚠️' : '📊'}
-                  </div>
-                  <div className="alert-content">
-                    <div className="alert-product">{alert.produit}</div>
-                    <div className="alert-details">
-                      <span className="alert-level">{alert.niveau}</span>
-                      <span className="alert-quantity">• {alert.quantité} restant</span>
-                    </div>
-                  </div>
-                  <button className={`alert-action ${alert.action.toLowerCase()}`}>
-                    {alert.action}
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
-
-        {/* Right Column */}
-        <div className="content-right">
-          {/* File de Production */}
-          <div className="content-card">
-            <div className="card-header">
-              <h3>🏭 File de Production</h3>
-              <button className="view-all">Voir planning →</button>
-            </div>
-            <div className="production-queue">
-              {productionQueue.map((step, index) => (
-                <div key={index} className="production-step">
-                  <div className="step-header">
-                    <div className="step-name">{step.étape}</div>
-                    <div className="step-responsible">
-                      <span className="responsible-icon">👤</span>
-                      {step.responsable}
-                    </div>
-                  </div>
-                  <div className="step-details">
-                    <div className="step-quantity">{step.quantité}</div>
-                    <div className="step-progress">
-                      <div 
-                        className="progress-bar"
-                        style={{ width: `${step.avancement}` }}
-                      >
-                        <div className="progress-fill"></div>
-                      </div>
-                      <span className="progress-text">{step.avancement}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Équipe Familiale */}
-          <div className="content-card">
-            <div className="card-header">
-              <h3>👨‍👩‍👧‍👦 Équipe en Ligne</h3>
-            </div>
-            <div className="team-status">
-              <div className="team-member online">
-                <div className="member-avatar">👨</div>
-                <div className="member-info">
-                  <div className="member-name">Papa (Fondateur)</div>
-                  <div className="member-task">Préparation écrans</div>
-                </div>
-                <div className="member-status"></div>
-              </div>
-              <div className="team-member online">
-                <div className="member-avatar">👩</div>
-                <div className="member-info">
-                  <div className="member-name">Maman (Gérante)</div>
-                  <div className="member-task">Impression</div>
-                </div>
-                <div className="member-status"></div>
-              </div>
-              <div className="team-member online">
-                <div className="member-avatar">👦</div>
-                <div className="member-info">
-                  <div className="member-name">Junior (Assistant)</div>
-                  <div className="member-task">Séchage</div>
-                </div>
-                <div className="member-status"></div>
-              </div>
-              <div className="team-member offline">
-                <div className="member-avatar">👧</div>
-                <div className="member-info">
-                  <div className="member-name">Soeur (Logistique)</div>
-                  <div className="member-task">Pause déjeuner</div>
-                </div>
-                <div className="member-status"></div>
-              </div>
-            </div>
-          </div>
-
-          {/* Messages Importants */}
-          <div className="content-card">
-            <div className="card-header">
-              <h3>💬 Messages Familiaux</h3>
-            </div>
-            <div className="family-messages">
-              <div className="message">
-                <div className="message-icon">📋</div>
-                <div className="message-content">
-                  <p><strong>Réunion famille</strong> ce soir 18h : point sur les commandes de fin d'année</p>
-                  <span className="message-time">Aujourd'hui, 10:30</span>
-                </div>
-              </div>
-              <div className="message">
-                <div className="message-icon">🚚</div>
-                <div className="message-content">
-                  <p><strong>Livraison encre</strong> prévue demain matin. Vérifier le stock de solvant.</p>
-                  <span className="message-time">Hier, 16:45</span>
-                </div>
-              </div>
-              <div className="message">
-                <div className="message-icon">🎉</div>
-                <div className="message-content">
-                  <p><strong>Anniversaire Papa</strong> samedi ! Prévoir fermeture atelier 14h.</p>
-                  <span className="message-time">Lundi, 09:15</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Footer du Dashboard */}
-      <div className="dashboard-footer">
-        <div className="footer-info">
-          <span className="footer-icon">👕</span>
-          <div className="footer-text">
-            <strong>ByGagoos Ink</strong> • Sérigraphie Textile Familiale depuis 2015
-          </div>
-        </div>
-        <div className="footer-stats">
-          <span className="stat">📈 +24% croissance cette année</span>
-          <span className="stat">⭐ 98% clients satisfaits</span>
-          <span className="stat">🌱 100% engagement local</span>
-        </div>
-      </div>
+      )}
     </div>
   );
 };

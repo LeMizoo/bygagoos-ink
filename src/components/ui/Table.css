@@ -1,0 +1,286 @@
+/* frontend/src/components/ui/Table.css */
+.table-container {
+  width: 100%;
+  overflow: hidden;
+}
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+/* Base table */
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: white;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+/* Table header */
+.table-header {
+  background-color: #f9fafb;
+}
+
+.table-header-cell {
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  color: #374151;
+  text-align: left;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #e5e7eb;
+  white-space: nowrap;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.table-header-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Sortable headers */
+.table-header-sortable {
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: background-color 0.2s;
+}
+
+.table-header-sortable:hover {
+  background-color: #f3f4f6;
+}
+
+.table-header-sorted {
+  background-color: #e0e7ff;
+  color: #4f46e5;
+}
+
+.table-sort-indicator {
+  font-size: 0.75rem;
+  opacity: 0.5;
+}
+
+.table-header-sorted .table-sort-indicator {
+  opacity: 1;
+}
+
+/* Table body */
+.table-body {
+  background-color: white;
+}
+
+.table-row {
+  border-bottom: 1px solid #f3f4f6;
+  transition: background-color 0.2s;
+}
+
+.table-row:last-child {
+  border-bottom: none;
+}
+
+/* Row variants */
+.table-row-active {
+  background-color: #e0e7ff;
+}
+
+.table-row-disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.table-row-clickable:hover {
+  background-color: #f9fafb;
+  cursor: pointer;
+}
+
+/* Table cells */
+.table-cell {
+  padding: 1rem;
+  color: #374151;
+  vertical-align: middle;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.table-row:last-child .table-cell {
+  border-bottom: none;
+}
+
+/* Striped table */
+.table-striped .table-row:nth-child(even) {
+  background-color: #f9fafb;
+}
+
+/* Hover effect */
+.table-hover .table-row:hover {
+  background-color: #f3f4f6;
+}
+
+/* Compact table */
+.table-compact .table-cell {
+  padding: 0.5rem 0.75rem;
+}
+
+.table-compact .table-header-cell {
+  padding: 0.5rem 0.75rem;
+}
+
+/* Table footer */
+.table-footer {
+  background-color: #f9fafb;
+  border-top: 2px solid #e5e7eb;
+}
+
+.table-footer .table-cell {
+  font-weight: 600;
+  color: #374151;
+}
+
+/* Table caption */
+.table-caption {
+  caption-side: bottom;
+  padding: 0.75rem;
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-align: center;
+}
+
+/* Empty state */
+.table-empty-cell {
+  padding: 3rem 1rem !important;
+}
+
+.table-empty-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  text-align: center;
+}
+
+.table-empty-icon {
+  color: #9ca3af;
+  margin-bottom: 0.5rem;
+}
+
+.table-empty-icon svg {
+  width: 3rem;
+  height: 3rem;
+}
+
+.table-empty-message {
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.table-empty-action {
+  margin-top: 0.5rem;
+}
+
+/* Loading state */
+.table-loading-shimmer {
+  height: 1rem;
+  background: linear-gradient(
+    90deg,
+    #f3f4f6 25%,
+    #e5e7eb 50%,
+    #f3f4f6 75%
+  );
+  background-size: 200% 100%;
+  animation: table-loading 1.5s infinite;
+  border-radius: 0.25rem;
+}
+
+@keyframes table-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Responsive table */
+@media (max-width: 768px) {
+  .table-responsive .table {
+    min-width: 640px;
+  }
+  
+  .table-header-cell,
+  .table-cell {
+    padding: 0.5rem 0.75rem;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .table {
+    background-color: #1f2937;
+    color: #f9fafb;
+  }
+  
+  .table-header {
+    background-color: #111827;
+  }
+  
+  .table-header-cell {
+    color: #d1d5db;
+    border-bottom-color: #374151;
+  }
+  
+  .table-cell {
+    color: #d1d5db;
+    border-bottom-color: #374151;
+  }
+  
+  .table-striped .table-row:nth-child(even) {
+    background-color: #111827;
+  }
+  
+  .table-row-active {
+    background-color: #1e40af;
+  }
+  
+  .table-row-clickable:hover {
+    background-color: #374151;
+  }
+  
+  .table-hover .table-row:hover {
+    background-color: #374151;
+  }
+  
+  .table-loading-shimmer {
+    background: linear-gradient(
+      90deg,
+      #374151 25%,
+      #4b5563 50%,
+      #374151 75%
+    );
+  }
+  
+  .table-footer {
+    background-color: #111827;
+    border-top-color: #374151;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .table-row {
+    transition: none;
+  }
+  
+  .table-header-sortable:hover {
+    transition: none;
+  }
+  
+  .table-loading-shimmer {
+    animation: none;
+  }
+}

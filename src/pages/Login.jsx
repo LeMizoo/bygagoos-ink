@@ -25,14 +25,16 @@ const Login = () => {
     setIsLoading(true);
     
     try {
-      const success = await login(username, password);
-      if (success) {
-        navigate('/dashboard');
+      const result = await login(username, password);
+      if (result.success) {
+        // CORRECTION : Rediriger vers /app/dashboard au lieu de /dashboard
+        navigate('/app/dashboard');
       } else {
-        setError('Identifiants incorrects. Veuillez réessayer.');
+        setError(result.error || 'Identifiants incorrects. Veuillez réessayer.');
       }
     } catch (err) {
       setError('Une erreur est survenue. Veuillez réessayer.');
+      console.error('Login error:', err);
     } finally {
       setIsLoading(false);
     }
@@ -107,6 +109,7 @@ const Login = () => {
                   placeholder="Entrez votre nom d'utilisateur"
                   disabled={isLoading}
                   className="form-input"
+                  autoComplete="username"
                 />
               </div>
 
@@ -123,6 +126,7 @@ const Login = () => {
                   placeholder="Entrez votre mot de passe"
                   disabled={isLoading}
                   className="form-input"
+                  autoComplete="current-password"
                 />
               </div>
 
@@ -148,7 +152,7 @@ const Login = () => {
                 disabled={isLoading}
               >
                 {isLoading ? (
-                  <Loading type="dots" size="small" />
+                  <Loading />
                 ) : (
                   <>
                     <span className="btn-icon">→</span>
@@ -166,7 +170,16 @@ const Login = () => {
 
             <div className="demo-credentials">
               <p className="demo-title">Accès démo :</p>
-              <p>Utilisateur: <code>famille</code> | Mot de passe: <code>gagoos2024</code></p>
+              <div className="demo-credential">
+                <div className="credential-item">
+                  <span className="credential-label">Utilisateur:</span>
+                  <code className="credential-value">famille</code>
+                </div>
+                <div className="credential-item">
+                  <span className="credential-label">Mot de passe:</span>
+                  <code className="credential-value">gagoos2024</code>
+                </div>
+              </div>
               <p className="demo-note">
                 <small>Plateforme réservée à la famille et aux collaborateurs</small>
               </p>

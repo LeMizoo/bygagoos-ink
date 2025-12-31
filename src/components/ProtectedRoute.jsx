@@ -1,30 +1,24 @@
 import React, { useContext } from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import Loading from './Loading/Loading';
 
-const ProtectedRoute = ({ requiredPermission = null, redirectTo = '/login' }) => {
-  const { isAuthenticated, loading, user, hasPermission } = useContext(AuthContext);
+const ProtectedRoute = ({ children }) => {
+  const { loading } = useContext(AuthContext);
 
   if (loading) {
-    return <Loading type="spinner" fullscreen />;
+    return <Loading />;
   }
 
-  if (!isAuthenticated) {
-    return <Navigate to={redirectTo} replace />;
+  // Vérification simple
+  const token = localStorage.getItem('family_token');
+  const userData = localStorage.getItem('user');
+  
+  if (!token || !userData) {
+    return <Navigate to="/login" replace />;
   }
 
-  // Vérifier les permissions si nécessaire
-  if (requiredPermission && !hasPermission(requiredPermission)) {
-    return <Navigate to="/unauthorized" replace />;
-  }
-
-  // Vérifier les rôles si nécessaire
-  // if (requiredRole && user?.role !== requiredRole) {
-  //   return <Navigate to="/unauthorized" replace />;
-  // }
-
-  return <Outlet />;
+  return children;
 };
 
 export default ProtectedRoute;

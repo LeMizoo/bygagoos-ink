@@ -1,100 +1,121 @@
-import React from 'react';
+import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
-
-// Pages
-import Gallery from './pages/Gallery';
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import OrdersPage from './pages/OrdersPage';
-import ClientsPage from './pages/ClientsPage';
-import ProductionTeam from './pages/ProductionTeam';
-import FamilyPage from './pages/FamilyPage';
-import ProfilePage from './pages/ProfilePage';
-import CalendarPage from './pages/CalendarPage';
-import DocumentsPage from './pages/DocumentsPage';
-import AccountingPage from './pages/AccountingPage';
-import LogisticsPage from './pages/LogisticsPage';
-import StockConsumablesPage from './pages/StockConsumablesPage';
-import SettingsPage from './pages/SettingsPage';
-
-// Layout Components
 import Navbar from './components/layout/Navbar';
 import Sidebar from './components/layout/Sidebar';
+import Loading from './components/Loading/Loading';
 
+import './styles/globals.css';
 import './App.css';
 
-// Composant Layout pour les routes protégées
-const AppLayout = ({ children }) => (
-  <div className="app-layout">
-    <Navbar />
-    <div className="main-container">
-      <Sidebar />
-      <div className="content-area">
-        {children}
+// Pages
+const Gallery = lazy(() => import('./pages/Gallery'));
+const Login = lazy(() => import('./pages/Login'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const ClientsPage = lazy(() => import('./pages/ClientsPage'));
+const OrdersPage = lazy(() => import('./pages/OrdersPage'));
+const OrdersNewPage = lazy(() => import('./pages/OrdersNewPage'));
+const OrderEditPage = lazy(() => import('./pages/OrderEditPage'));
+const ProductionTeam = lazy(() => import('./pages/ProductionTeam'));
+const FamilyPage = lazy(() => import('./pages/FamilyPage'));
+
+// Layout principal
+const AppLayout = () => {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  return (
+    <div className="app-container">
+      <Navbar onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
+      <div className="app-main">
+        <Sidebar 
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
+        />
+        
+        {/* Overlay pour mobile */}
+        {isSidebarOpen && (
+          <div 
+            className="sidebar-overlay"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
+        
+        <main className="app-content">
+          <div className="content-container">
+            <Suspense fallback={<Loading />}>
+              <Routes>
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard" element={<Dashboard />} />
+                <Route path="clients" element={<ClientsPage />} />
+                <Route path="orders" element={<OrdersPage />} />
+                <Route path="orders/new" element={<OrdersNewPage />} />
+                <Route path="orders/edit/:id" element={<OrderEditPage />} />
+                <Route path="production" element={<ProductionTeam />} />
+                <Route path="family" element={<FamilyPage />} />
+                <Route path="profile" element={<div className="coming-soon">Profil (en développement)</div>} />
+                <Route path="calendar" element={<div className="coming-soon">Calendrier (en développement)</div>} />
+                <Route path="documents" element={<div className="coming-soon">Documents (en développement)</div>} />
+                <Route path="accounting" element={<div className="coming-soon">Comptabilité (en développement)</div>} />
+                <Route path="logistics" element={<div className="coming-soon">Logistique (en développement)</div>} />
+                <Route path="stock" element={<div className="coming-soon">Stock (en développement)</div>} />
+                <Route path="settings" element={<div className="coming-soon">Paramètres (en développement)</div>} />
+              </Routes>
+            </Suspense>
+          </div>
+        </main>
       </div>
     </div>
-  </div>
-);
+  );
+};
+
+// Layout public
+const PublicLayout = () => {
+  return (
+    <div className="public-container">
+      <Navbar />
+      <main className="public-content">
+        <Suspense fallback={<Loading />}>
+          <Routes>
+            <Route index element={<Gallery />} />
+            <Route path="gallery" element={<Gallery />} />
+            <Route path="login" element={<Login />} />
+            <Route path="family" element={<FamilyPage />} />
+          </Routes>
+        </Suspense>
+      </main>
+    </div>
+  );
+};
 
 function App() {
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading) {
+    return <Loading fullScreen />;
+  }
+
   return (
     <AuthProvider>
-      <BrowserRouter future={{
-        v7_startTransition: true,
-        v7_relativeSplatPath: true
-      }}>
+      <BrowserRouter>
         <Routes>
-          {/* Page d'accueil publique - accessible à tous */}
-          <Route path="/" element={<Gallery />} />
+          {/* Routes publiques */}
+          <Route path="/*" element={<PublicLayout />} />
           
-          {/* Page de connexion */}
-          <Route path="/login" element={<Login />} />
-          
-          {/* Route protégée pour /app */}
-          <Route 
-            path="/app" 
-            element={
-              <ProtectedRoute>
-                <AppLayout>
-                  <Navigate to="/app/dashboard" replace />
-                </AppLayout>
-              </ProtectedRoute>
-            } 
-          />
-          
-          {/* Routes protégées avec layout */}
-          <Route 
-            path="/app/*" 
-            element={
-              <ProtectedRoute>
-                <AppLayout>
-                  <Routes>
-                    <Route path="dashboard" element={<Dashboard />} />
-                    <Route path="orders" element={<OrdersPage />} />
-                    <Route path="clients" element={<ClientsPage />} />
-                    <Route path="production" element={<ProductionTeam />} />
-                    <Route path="family" element={<FamilyPage />} />
-                    <Route path="profile" element={<ProfilePage />} />
-                    <Route path="calendar" element={<CalendarPage />} />
-                    <Route path="documents" element={<DocumentsPage />} />
-                    <Route path="accounting" element={<AccountingPage />} />
-                    <Route path="logistics" element={<LogisticsPage />} />
-                    <Route path="stock" element={<StockConsumablesPage />} />
-                    <Route path="settings" element={<SettingsPage />} />
-                    <Route path="*" element={<Navigate to="dashboard" replace />} />
-                  </Routes>
-                </AppLayout>
-              </ProtectedRoute>
-            } 
-          />
-          
-          {/* Redirection pour anciens liens */}
-          <Route path="/dashboard" element={<Navigate to="/app/dashboard" replace />} />
-          
-          {/* Page 404 - Redirige vers l'accueil */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          {/* Routes protégées */}
+          <Route path="/app/*" element={
+            <ProtectedRoute>
+              <AppLayout />
+            </ProtectedRoute>
+          } />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

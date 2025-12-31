@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { MobileLayout, MobileSection, MobileCard } from '../components/layout/MobileLayout';
 import './ProductionTeam.css';
 
 const ProductionTeam = () => {
@@ -7,136 +8,176 @@ const ProductionTeam = () => {
   const familyMembers = [
     {
       id: 1,
-      name: 'Papa Gagoos',
+      name: 'Tovoniaina (Dada)',
       role: 'Fondateur & Maître Imprimeur',
-      avatar: '👨',
+      avatar: '/profiles/tovoniaina.jpg',
       status: 'active',
       skills: ['Sérigraphie', 'Design', 'Gestion'],
-      years: '10 ans',
-      currentTask: 'Préparation écrans #BG-1245',
-      phone: '+261 34 00 00 01',
-      email: 'papa@bygagoos.mg'
+      experience: '10 ans',
+      currentTask: 'Préparation écrans commande #BG-1245',
+      phone: '+261 34 43 593 30',
+      email: 'tovoniaina.rahendrison@gmail.com',
+      shift: '07h-17h',
+      tasksCompleted: 42,
+      rating: 4.9
     },
     {
       id: 2,
-      name: 'Maman Gagoos',
+      name: 'Volatiana (Neny)',
       role: 'Gérante & Responsable Qualité',
-      avatar: '👩',
+      avatar: '/profiles/volatiana.jpg',
       status: 'active',
       skills: ['Impression', 'Relations Clients', 'Comptabilité'],
-      years: '8 ans',
+      experience: '8 ans',
       currentTask: 'Impression commande école',
-      phone: '+261 34 00 00 02',
-      email: 'maman@bygagoos.mg'
+      phone: '',
+      email: 'dedettenadia@gmail.com',
+      shift: '08h-16h',
+      tasksCompleted: 38,
+      rating: 4.8
     },
     {
       id: 3,
-      name: 'Junior Gagoos',
-      role: 'Assistant Production',
-      avatar: '👦',
+      name: 'Miantsatiana',
+      role: 'Responsable Design & Création',
+      avatar: '/profiles/miantsatiana.jpg',
       status: 'active',
-      skills: ['Séchage', 'Emballage', 'Logistique'],
-      years: '3 ans',
-      currentTask: 'Contrôle qualité séchage',
-      phone: '+261 34 00 00 03',
-      email: 'junior@bygagoos.mg'
+      skills: ['Design graphique', 'Conception', 'Digitalisation'],
+      experience: '6 ans',
+      currentTask: 'Design nouvelle collection',
+      phone: '',
+      email: 'miantsatianarahendrison@gmail.com',
+      shift: '09h-17h',
+      tasksCompleted: 35,
+      rating: 4.7
     },
     {
       id: 4,
-      name: 'Soeur Gagoos',
-      role: 'Responsable Logistique',
-      avatar: '👧',
-      status: 'break',
-      skills: ['Livraisons', 'Stock', 'Communication'],
-      years: '2 ans',
-      currentTask: 'Préparation livraisons',
-      phone: '+261 34 00 00 04',
-      email: 'soeur@bygagoos.mg'
+      name: 'Tia Faniry',
+      role: 'Responsable Communication & Relations',
+      avatar: '/profiles/tia-faniry.jpg',
+      status: 'active',
+      skills: ['Communication', 'Gestion commandes', 'Logistique'],
+      experience: '4 ans',
+      currentTask: 'Préparation livraisons clients',
+      phone: '',
+      email: 'fanirytia17@gmail.com',
+      shift: '08h-15h',
+      tasksCompleted: 31,
+      rating: 4.6
     },
   ];
 
   const productionSchedule = [
-    { day: 'Lundi', hours: '7h-17h', focus: 'Impression commandes urgentes' },
-    { day: 'Mardi', hours: '7h-17h', focus: 'Design & préparation écrans' },
-    { day: 'Mercredi', hours: '7h-17h', focus: 'Production de masse' },
-    { day: 'Jeudi', hours: '7h-17h', focus: 'Finitions & emballage' },
-    { day: 'Vendredi', hours: '7h-16h', focus: 'Livraisons & réunion famille' },
-    { day: 'Samedi', hours: '8h-12h', focus: 'Nettoyage & maintenance' },
-    { day: 'Dimanche', hours: 'Fermé', focus: 'Repos familial' },
+    { day: 'Lundi', hours: '7h-17h', focus: 'Impression commandes urgentes', team: '👨👩' },
+    { day: 'Mardi', hours: '7h-17h', focus: 'Design & préparation écrans', team: '👨👧' },
+    { day: 'Mercredi', hours: '7h-17h', focus: 'Production de masse', team: '👨👩👦' },
+    { day: 'Jeudi', hours: '7h-17h', focus: 'Finitions & emballage', team: '👨👩👧' },
+    { day: 'Vendredi', hours: '7h-16h', focus: 'Livraisons & réunion', team: '👨👩👦👧' },
+    { day: 'Samedi', hours: '8h-12h', focus: 'Nettoyage & maintenance', team: '👨👦' },
+    { day: 'Dimanche', hours: 'Fermé', focus: 'Repos familial', team: '🏡' },
   ];
 
-  const skillMatrix = [
-    { skill: 'Sérigraphie', papa: 'Expert', maman: 'Expert', junior: 'Intermédiaire', soeur: 'Débutant' },
-    { skill: 'Design', papa: 'Expert', maman: 'Intermédiaire', junior: 'Débutant', soeur: 'Débutant' },
-    { skill: 'Gestion', papa: 'Expert', maman: 'Expert', junior: 'Apprentissage', soeur: 'Apprentissage' },
-    { skill: 'Relation Client', papa: 'Intermédiaire', maman: 'Expert', junior: 'Débutant', soeur: 'Intermédiaire' },
-    { skill: 'Logistique', papa: 'Intermédiaire', maman: 'Intermédiaire', junior: 'Intermédiaire', soeur: 'Expert' },
-  ];
+  const currentShift = {
+    time: '14h00 - 17h00',
+    members: [
+      { name: 'Tovoniaina', role: 'Responsable', avatar: '👨' },
+      { name: 'Miantsatiana', role: 'Assistance', avatar: '👧' }
+    ],
+    task: 'Finition commande #BG-1245'
+  };
+
+  const actionButton = (
+    <button
+      onClick={() => {}}
+      className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+      aria-label="Nouveau message"
+    >
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+      <span className="hidden sm:inline">Message</span>
+    </button>
+  );
 
   return (
-    <div className="production-team-page">
-      <div className="page-header">
-        <div>
-          <h1>👨‍👩‍👧‍👦 Équipe Familiale</h1>
-          <p className="page-subtitle">L'âme de l'atelier ByGagoos Ink</p>
-        </div>
-        <div className="family-badge">
-          <span className="badge-icon">🏡</span>
-          <span>Entreprise Familiale depuis 2015</span>
-        </div>
-      </div>
-
+    <MobileLayout 
+      title="Équipe Familiale" 
+      actionButton={actionButton}
+    >
       {/* Tabs */}
-      <div className="team-tabs">
-        <button 
-          className={`tab ${activeTab === 'members' ? 'active' : ''}`}
-          onClick={() => setActiveTab('members')}
-        >
-          👥 Membres
-        </button>
-        <button 
-          className={`tab ${activeTab === 'schedule' ? 'active' : ''}`}
-          onClick={() => setActiveTab('schedule')}
-        >
-          📅 Planning
-        </button>
-        <button 
-          className={`tab ${activeTab === 'skills' ? 'active' : ''}`}
-          onClick={() => setActiveTab('skills')}
-        >
-          🎯 Compétences
-        </button>
-        <button 
-          className={`tab ${activeTab === 'messages' ? 'active' : ''}`}
-          onClick={() => setActiveTab('messages')}
-        >
-          💬 Messages
-        </button>
-      </div>
+      <MobileSection>
+        <div className="team-tabs-mobile">
+          <button 
+            className={`team-tab ${activeTab === 'members' ? 'active' : ''}`}
+            onClick={() => setActiveTab('members')}
+          >
+            <span className="tab-icon">👥</span>
+            <span className="tab-label">Membres</span>
+          </button>
+          <button 
+            className={`team-tab ${activeTab === 'schedule' ? 'active' : ''}`}
+            onClick={() => setActiveTab('schedule')}
+          >
+            <span className="tab-icon">📅</span>
+            <span className="tab-label">Planning</span>
+          </button>
+          <button 
+            className={`team-tab ${activeTab === 'tasks' ? 'active' : ''}`}
+            onClick={() => setActiveTab('tasks')}
+          >
+            <span className="tab-icon">📋</span>
+            <span className="tab-label">Tâches</span>
+          </button>
+        </div>
+      </MobileSection>
 
+      {/* Membres de l'équipe */}
       {activeTab === 'members' && (
-        <div className="members-section">
-          <div className="members-grid">
+        <MobileSection title="👨‍👩‍👧‍👦 L'Équipe Familiale">
+          <div className="team-members-grid">
             {familyMembers.map((member) => (
-              <div key={member.id} className="member-card">
+              <div key={member.id} className="team-member-card">
                 <div className="member-header">
-                  <div className="member-avatar">{member.avatar}</div>
-                  <div className="member-status-indicator">
+                  <div className="member-avatar">
+                    <img 
+                      src={member.avatar} 
+                      alt={member.name}
+                      className="member-avatar-img"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.parentElement.innerHTML = member.name.charAt(0);
+                      }}
+                    />
+                  </div>
+                  <div className="member-status">
                     <div className={`status-dot ${member.status}`}></div>
+                    <span className="status-text">En ligne</span>
                   </div>
                 </div>
                 
                 <div className="member-info">
                   <h3 className="member-name">{member.name}</h3>
                   <p className="member-role">{member.role}</p>
-                  <div className="member-experience">
-                    <span className="experience-icon">⏳</span>
-                    {member.years} d'expérience
+                  
+                  <div className="member-stats">
+                    <div className="member-stat">
+                      <span className="stat-label">Expérience:</span>
+                      <span className="stat-value">{member.experience}</span>
+                    </div>
+                    <div className="member-stat">
+                      <span className="stat-label">Tâches:</span>
+                      <span className="stat-value">{member.tasksCompleted}</span>
+                    </div>
+                    <div className="member-stat">
+                      <span className="stat-label">Note:</span>
+                      <span className="stat-value">{member.rating}/5</span>
+                    </div>
                   </div>
                 </div>
                 
                 <div className="member-skills">
-                  <div className="skills-label">Compétences :</div>
+                  <div className="skills-title">Compétences</div>
                   <div className="skills-list">
                     {member.skills.map((skill, idx) => (
                       <span key={idx} className="skill-tag">{skill}</span>
@@ -144,227 +185,143 @@ const ProductionTeam = () => {
                   </div>
                 </div>
                 
-                <div className="member-current-task">
-                  <div className="task-label">En cours :</div>
-                  <div className="task-content">{member.currentTask}</div>
-                </div>
-                
-                <div className="member-contact">
-                  <div className="contact-item">
-                    <span className="contact-icon">📱</span>
-                    {member.phone}
-                  </div>
-                  <div className="contact-item">
-                    <span className="contact-icon">✉️</span>
-                    {member.email}
-                  </div>
+                <div className="member-current">
+                  <div className="current-label">En cours:</div>
+                  <div className="current-task">{member.currentTask}</div>
                 </div>
                 
                 <div className="member-actions">
-                  <button className="action-btn message">
-                    <span className="action-icon">💬</span>
+                  <button className="member-action-btn message">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
                     Message
                   </button>
-                  <button className="action-btn assign">
-                    <span className="action-icon">📋</span>
-                    Assigner tâche
+                  <button className="member-action-btn call">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    Appeler
                   </button>
                 </div>
               </div>
             ))}
           </div>
-        </div>
+        </MobileSection>
       )}
 
+      {/* Planning */}
       {activeTab === 'schedule' && (
-        <div className="schedule-section">
-          <div className="weekly-schedule">
-            <h3>📅 Planning Hebdomadaire de l'Atelier</h3>
-            <div className="schedule-grid">
+        <>
+          <MobileSection title="📅 Planning Hebdomadaire">
+            <div className="weekly-schedule-mobile">
               {productionSchedule.map((day, index) => (
-                <div key={index} className="day-card">
+                <div key={index} className="day-schedule-card">
                   <div className="day-header">
                     <div className="day-name">{day.day}</div>
                     <div className="day-hours">{day.hours}</div>
                   </div>
                   <div className="day-focus">{day.focus}</div>
-                  <div className="day-team">
-                    {day.day === 'Dimanche' ? (
-                      <span className="team-status">👨‍👩‍👧‍👦 Repos familial</span>
-                    ) : (
-                      <span className="team-status">🏭 Toute l'équipe</span>
-                    )}
-                  </div>
+                  <div className="day-team">{day.team}</div>
                 </div>
               ))}
             </div>
-          </div>
-          
-          <div className="current-shift">
-            <h3>🕐 Tour de Garde Actuel</h3>
-            <div className="shift-info">
-              <div className="shift-time">14h00 - 17h00</div>
-              <div className="shift-members">
-                <div className="shift-member">
-                  <span className="member-avatar">👨</span>
-                  <span>Papa (Responsable)</span>
-                </div>
-                <div className="shift-member">
-                  <span className="member-avatar">👦</span>
-                  <span>Junior (Assistance)</span>
-                </div>
+          </MobileSection>
+
+          <MobileSection title="🕐 Tour actuel">
+            <div className="current-shift-card">
+              <div className="shift-time">{currentShift.time}</div>
+              <div className="shift-team">
+                {currentShift.members.map((member, idx) => (
+                  <div key={idx} className="shift-member">
+                    <span className="member-avatar">{member.avatar}</span>
+                    <div>
+                      <div className="member-name">{member.name}</div>
+                      <div className="member-role">{member.role}</div>
+                    </div>
+                  </div>
+                ))}
               </div>
               <div className="shift-task">
-                <strong>Tâche :</strong> Finition commande #BG-1245
+                <strong>Tâche :</strong> {currentShift.task}
               </div>
             </div>
-          </div>
-        </div>
+          </MobileSection>
+        </>
       )}
 
-      {activeTab === 'skills' && (
-        <div className="skills-section">
-          <div className="skills-matrix">
-            <h3>🎯 Matrice des Compétences Familiales</h3>
-            <table className="matrix-table">
-              <thead>
-                <tr>
-                  <th>Compétence</th>
-                  <th>Papa</th>
-                  <th>Maman</th>
-                  <th>Junior</th>
-                  <th>Soeur</th>
-                </tr>
-              </thead>
-              <tbody>
-                {skillMatrix.map((row, index) => (
-                  <tr key={index}>
-                    <td className="skill-name">{row.skill}</td>
-                    <td>
-                      <span className={`skill-level ${row.papa.toLowerCase()}`}>
-                        {row.papa}
-                      </span>
-                    </td>
-                    <td>
-                      <span className={`skill-level ${row.maman.toLowerCase()}`}>
-                        {row.maman}
-                      </span>
-                    </td>
-                    <td>
-                      <span className={`skill-level ${row.junior.toLowerCase()}`}>
-                        {row.junior}
-                      </span>
-                    </td>
-                    <td>
-                      <span className={`skill-level ${row.soeur.toLowerCase()}`}>
-                        {row.soeur}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          
-          <div className="training-section">
-            <h3>📚 Programme de Formation</h3>
-            <div className="training-cards">
-              <div className="training-card">
-                <div className="training-icon">🎨</div>
-                <div className="training-content">
-                  <h4>Junior - Perfectionnement Design</h4>
-                  <p>Formation logiciels design graphique</p>
-                  <span className="training-status upcoming">À programmer</span>
+      {/* Tâches en cours */}
+      {activeTab === 'tasks' && (
+        <MobileSection title="📋 Tâches en cours">
+          <div className="current-tasks-list">
+            {familyMembers.map((member) => (
+              <div key={member.id} className="member-task-card">
+                <div className="task-member">
+                  <div className="task-avatar">
+                    {member.name.charAt(0)}
+                  </div>
+                  <div>
+                    <div className="task-member-name">{member.name}</div>
+                    <div className="task-member-role">{member.role}</div>
+                  </div>
+                </div>
+                <div className="task-details">
+                  <div className="task-title">{member.currentTask}</div>
+                  <div className="task-progress">
+                    <div className="progress-bar">
+                      <div className="progress-fill" style={{ width: '75%' }}></div>
+                    </div>
+                    <div className="progress-text">75%</div>
+                  </div>
+                </div>
+                <div className="task-actions">
+                  <button className="task-action-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M22 4L12 14.01l-3-3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </button>
                 </div>
               </div>
-              <div className="training-card">
-                <div className="training-icon">💼</div>
-                <div className="training-content">
-                  <h4>Soeur - Gestion Commerciale</h4>
-                  <p>Cours gestion entreprise familiale</p>
-                  <span className="training-status in-progress">En cours</span>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
-        </div>
+        </MobileSection>
       )}
 
-      {activeTab === 'messages' && (
-        <div className="messages-section">
-          <div className="family-messages">
-            <h3>💬 Messages Familiaux</h3>
-            <div className="message-list">
-              <div className="message-card">
-                <div className="message-header">
-                  <span className="message-sender">👨 Papa</span>
-                  <span className="message-time">Aujourd'hui, 10:30</span>
-                </div>
-                <div className="message-content">
-                  N'oubliez pas la réunion ce soir 18h pour préparer les commandes de fin d'année.
-                </div>
-              </div>
-              <div className="message-card">
-                <div className="message-header">
-                  <span className="message-sender">👩 Maman</span>
-                  <span className="message-time">Hier, 16:45</span>
-                </div>
-                <div className="message-content">
-                  Livraison d'encre prévue demain matin. Vérifiez le stock de solvant SVP.
-                </div>
-              </div>
-              <div className="message-card">
-                <div className="message-header">
-                  <span className="message-sender">👧 Soeur</span>
-                  <span className="message-time">Lundi, 09:15</span>
-                </div>
-                <div className="message-content">
-                  Rappel : anniversaire Papa samedi ! Prévoir fermeture atelier à 14h.
-                </div>
-              </div>
+      {/* Stats de l'équipe */}
+      <MobileSection title="📊 Statistiques de l'équipe">
+        <div className="team-stats-grid">
+          <div className="team-stat-card">
+            <div className="stat-icon">👥</div>
+            <div className="stat-content">
+              <div className="stat-value">{familyMembers.length}/4</div>
+              <div className="stat-label">Présents</div>
             </div>
-            
-            <div className="message-composer">
-              <textarea 
-                placeholder="Écrire un message à la famille..."
-                className="message-input"
-              />
-              <button className="send-btn">
-                <span className="btn-icon">✉️</span>
-                Envoyer
-              </button>
+          </div>
+          <div className="team-stat-card">
+            <div className="stat-icon">📋</div>
+            <div className="stat-content">
+              <div className="stat-value">146</div>
+              <div className="stat-label">Tâches cette semaine</div>
+            </div>
+          </div>
+          <div className="team-stat-card">
+            <div className="stat-icon">✅</div>
+            <div className="stat-content">
+              <div className="stat-value">92%</div>
+              <div className="stat-label">Taux accomplissement</div>
+            </div>
+          </div>
+          <div className="team-stat-card">
+            <div className="stat-icon">⏱️</div>
+            <div className="stat-content">
+              <div className="stat-value">2.1j</div>
+              <div className="stat-label">Délai moyen</div>
             </div>
           </div>
         </div>
-      )}
-
-      {/* Family Values */}
-      <div className="family-values">
-        <h3>🏡 Nos Valeurs Familiales</h3>
-        <div className="values-grid">
-          <div className="value-card">
-            <div className="value-icon">🤝</div>
-            <div className="value-title">Solidarité</div>
-            <div className="value-desc">Chacun contribue selon ses forces</div>
-          </div>
-          <div className="value-card">
-            <div className="value-icon">⭐</div>
-            <div className="value-title">Excellence</div>
-            <div className="value-desc">Qualité artisanale dans chaque pièce</div>
-          </div>
-          <div className="value-card">
-            <div className="value-icon">🌱</div>
-            <div className="value-title">Transmission</div>
-            <div className="value-desc">Savoir-faire passé aux générations</div>
-          </div>
-          <div className="value-card">
-            <div className="value-icon">❤️</div>
-            <div className="value-title">Passion</div>
-            <div className="value-desc">Amour du métier dans chaque création</div>
-          </div>
-        </div>
-      </div>
-    </div>
+      </MobileSection>
+    </MobileLayout>
   );
 };
 

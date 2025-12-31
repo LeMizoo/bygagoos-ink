@@ -1,66 +1,49 @@
 {
-  "name": "bygagoos-ink-frontend",
+  "name": "bygagoos-frontend",
   "private": true,
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "prebuild": "node scripts/prepare-deploy.js",
-    "postbuild": "echo '✅ Build terminé avec succès!'",
-    "copy-images": "node scripts/prepare-deploy.js",
-    "prepare:images": "node scripts/prepare-deploy.js",
+    "dev": "node scripts/copy-images.cjs && vite",
+    "build": "node scripts/copy-images.cjs && vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
-    "format": "prettier --write .",
-    "test": "vitest",
-    "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage"
+    "format": "prettier --write \"src/**/*.{js,jsx,css,md}\"",
+    "prepare-deploy": "node scripts/prepare-deploy.cjs",
+    "copy-images": "node scripts/copy-images.cjs",
+    "optimize-images": "node scripts/optimize-images.cjs",
+    "analyze": "ANALYZE=true vite build"
   },
   "dependencies": {
-    "axios": "^1.6.2",
-    "chart.js": "^4.5.1",
-    "classnames": "^2.5.1",
-    "date-fns": "^3.0.6",
-    "fs-extra": "^11.3.3",
-    "lodash": "^4.17.21",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-icons": "^5.5.0",
-    "react-router-dom": "^6.20.1",
-    "recharts": "^3.6.0"
+    "@fontsource/inter": "^5.2.8",
+    "@fontsource/plus-jakarta-sans": "^5.2.8",
+    "@headlessui/react": "^1.7.17",
+    "@heroicons/react": "^2.0.18",
+    "axios": "^1.6.8",
+    "date-fns": "^3.3.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-hot-toast": "^2.6.0",
+    "react-icons": "^4.12.0",
+    "react-router-dom": "^7.11.0",
+    "recharts": "^2.10.4"
   },
   "devDependencies": {
-    "@types/fs-extra": "^11.0.4",
-    "@types/react": "^18.3.27",
-    "@types/react-dom": "^18.3.7",
-    "@vitejs/plugin-react": "^4.2.1",
+    "@babel/plugin-transform-react-jsx": "^7.27.1",
+    "@types/react": "^18.2.43",
+    "@types/react-dom": "^18.2.17",
+    "@vitejs/plugin-react": "^4.2.0",
     "autoprefixer": "^10.4.16",
-    "eslint": "^8.54.0",
+    "eslint": "^8.55.0",
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
+    "fs-extra": "^11.2.0",
     "postcss": "^8.4.32",
-    "prettier": "^3.1.0",
+    "prettier": "^3.1.1",
     "tailwindcss": "^3.3.6",
-    "terser": "^5.44.1",
-    "vite": "^5.0.0",
-    "vitest": "^1.0.4"
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  },
-  "engines": {
-    "node": ">=18.0.0",
-    "npm": ">=9.0.0"
+    "vite": "^7.3.0",
+    "vite-plugin-compression": "^0.5.1",
+    "vite-plugin-pwa": "^1.2.0"
   }
 }

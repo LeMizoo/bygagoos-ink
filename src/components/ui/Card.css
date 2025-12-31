@@ -1,0 +1,159 @@
+/* frontend/src/components/ui/Card.css */
+.card {
+  background: white;
+  position: relative;
+  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.card-border {
+  border: 1px solid #e5e7eb;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Header */
+.card-header {
+  padding: 1.5rem 1.5rem 0;
+}
+
+.card-header-divider {
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 1rem;
+}
+
+/* Body */
+.card-body {
+  width: 100%;
+}
+
+.card-body-padding {
+  padding: 1.5rem;
+}
+
+/* Footer */
+.card-footer {
+  padding: 0 1.5rem 1.5rem;
+}
+
+.card-footer-divider {
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+  margin-top: 1rem;
+}
+
+/* Card variants */
+.card-primary {
+  border-left: 4px solid #4f46e5;
+}
+
+.card-success {
+  border-left: 4px solid #10b981;
+}
+
+.card-warning {
+  border-left: 4px solid #f59e0b;
+}
+
+.card-danger {
+  border-left: 4px solid #ef4444;
+}
+
+/* Card with image */
+.card-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+/* Interactive card */
+.card-interactive {
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.card-interactive:hover {
+  background-color: #f9fafb;
+}
+
+/* Card group */
+.card-group {
+  display: grid;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .card-group-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .card-group-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .card-group-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Glass card effect */
+.card-glass {
+  background: rgba(255, 255, 255, 0.7);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Gradient card */
+.card-gradient {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.card-gradient .card-header,
+.card-gradient .card-body,
+.card-gradient .card-footer {
+  color: white;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .card {
+    background: #1f2937;
+    color: #e5e7eb;
+  }
+  
+  .card-border {
+    border-color: #374151;
+  }
+  
+  .card-glass {
+    background: rgba(31, 41, 55, 0.7);
+    border-color: rgba(55, 65, 81, 0.2);
+  }
+  
+  .card-interactive:hover {
+    background-color: #374151;
+  }
+  
+  .card-header-divider {
+    border-color: #374151;
+  }
+  
+  .card-footer-divider {
+    border-color: #374151;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .card-hover:hover {
+    transition: none;
+  }
+}

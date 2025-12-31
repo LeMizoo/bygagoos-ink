@@ -1,5 +1,324 @@
+/* AccountingPage.css */
 .accounting-page {
-  padding: 2rem;
-  max-width: 1400px;
-  margin: 0 auto;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding-bottom: 80px;
+}
+
+/* Financial Stats */
+.financial-stats {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .financial-stats {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.financial-stat {
+  background: white;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.financial-stat.revenue {
+  border-top: 4px solid #10b981;
+}
+
+.financial-stat.expenses {
+  border-top: 4px solid #ef4444;
+}
+
+.financial-stat.profit {
+  border-top: 4px solid #f59e0b;
+}
+
+.stat-icon {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.stat-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.stat-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1f2937;
+  line-height: 1.2;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.stat-trend {
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-top: 0.25rem;
+}
+
+.stat-trend.positive {
+  color: #10b981;
+}
+
+.stat-trend.negative {
+  color: #ef4444;
+}
+
+.stat-margin {
+  font-size: 0.75rem;
+  color: #f59e0b;
+  font-weight: 500;
+  margin-top: 0.25rem;
+}
+
+/* Invoices */
+.invoices-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.invoice-card {
+  background: white;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.invoice-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.invoice-id {
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.invoice-status {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.status-paid {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.invoice-info {
+  margin-bottom: 1rem;
+}
+
+.invoice-amount {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  text-align: right;
+  margin-bottom: 1rem;
+}
+
+.invoice-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.invoice-btn {
+  flex: 1;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+  background: white;
+  color: #4b5563;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+
+.invoice-btn.view:hover {
+  background: #dbeafe;
+  border-color: #3b82f6;
+  color: #1e40af;
+}
+
+.invoice-btn.download:hover {
+  background: #dcfce7;
+  border-color: #10b981;
+  color: #065f46;
+}
+
+/* Expenses */
+.expenses-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.expense-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: white;
+  border-radius: 0.75rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.expense-category {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 80px;
+}
+
+.category-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.category-name {
+  font-size: 0.75rem;
+  text-align: center;
+  color: #6b7280;
+  line-height: 1.2;
+}
+
+.expense-details {
+  flex: 1;
+}
+
+.expense-amount {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1f2937;
+  white-space: nowrap;
+}
+
+/* Payment Calendar */
+.payment-calendar {
+  background: white;
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.calendar-week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border: 1px solid #e5e7eb;
+}
+
+.calendar-day {
+  border-right: 1px solid #e5e7eb;
+  padding: 0.75rem;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+}
+
+.calendar-day:last-child {
+  border-right: none;
+}
+
+.day-header {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #6b7280;
+  text-align: center;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.day-payments {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.payment-item {
+  padding: 0.25rem 0.5rem;
+  background: #f3f4f6;
+  border-radius: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.payment-client {
+  font-size: 0.625rem;
+  color: #6b7280;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.payment-amount {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .calendar-week {
+    grid-template-columns: repeat(1, 1fr);
+  }
+  
+  .calendar-day {
+    min-height: auto;
+    border-right: none;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  
+  .calendar-day:last-child {
+    border-bottom: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .financial-stats {
+    gap: 0.75rem;
+  }
+  
+  .financial-stat {
+    padding: 1rem;
+  }
+  
+  .stat-value {
+    font-size: 1.5rem;
+  }
+  
+  .invoice-card,
+  .expense-card {
+    padding: 1rem;
+  }
 }

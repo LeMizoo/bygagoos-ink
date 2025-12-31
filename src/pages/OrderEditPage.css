@@ -1,0 +1,183 @@
+/* frontend/src/pages/OrderEditPage.css */
+.order-edit-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+/* En-tête */
+.order-edit-page h1 {
+  font-size: 1.875rem;
+  font-weight: 800;
+  color: #1e293b;
+  letter-spacing: -0.025em;
+}
+
+/* Cartes */
+.order-edit-page .card {
+  background: white;
+  border-radius: 1rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.order-edit-page .card:hover {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+/* Tableau */
+.order-edit-page table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.order-edit-page th {
+  background-color: #f9fafb;
+  font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.order-edit-page td {
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.order-edit-page tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+/* Inputs */
+.order-edit-page input,
+.order-edit-page select,
+.order-edit-page textarea {
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+.order-edit-page input:focus,
+.order-edit-page select:focus,
+.order-edit-page textarea:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+/* Boutons */
+.order-edit-page button {
+  font-weight: 500;
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.order-edit-page button:hover {
+  transform: translateY(-1px);
+}
+
+/* Badges de statut */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Animation de chargement */
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Print styles */
+@media print {
+  .order-edit-page {
+    background: white !important;
+  }
+  
+  button,
+  .no-print {
+    display: none !important;
+  }
+  
+  .card {
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .order-edit-page .grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .order-edit-page .flex {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .order-edit-page table {
+    font-size: 0.75rem;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .order-edit-page {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  }
+  
+  .order-edit-page .card {
+    background: #1f2937;
+    color: #e5e7eb;
+  }
+  
+  .order-edit-page th {
+    background: #111827;
+    color: #d1d5db;
+    border-color: #374151;
+  }
+  
+  .order-edit-page td {
+    border-color: #374151;
+  }
+  
+  .order-edit-page tbody tr:hover {
+    background-color: #374151;
+  }
+  
+  .order-edit-page input,
+  .order-edit-page select,
+  .order-edit-page textarea {
+    background: #374151;
+    border-color: #4b5563;
+    color: #f9fafb;
+  }
+  
+  .order-edit-page input:focus,
+  .order-edit-page select:focus,
+  .order-edit-page textarea:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+  }
+}
