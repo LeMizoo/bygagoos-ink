@@ -163,27 +163,10 @@ const Login = () => {
 
               <div className="form-footer">
                 <p className="welcome-message">
-                  Bienvenue dans l'atelier digital ByGagoos Ink
+                  Plateforme de gestion réservée aux membres autorisés
                 </p>
               </div>
             </form>
-
-            <div className="demo-credentials">
-              <p className="demo-title">Accès démo :</p>
-              <div className="demo-credential">
-                <div className="credential-item">
-                  <span className="credential-label">Utilisateur:</span>
-                  <code className="credential-value">famille</code>
-                </div>
-                <div className="credential-item">
-                  <span className="credential-label">Mot de passe:</span>
-                  <code className="credential-value">gagoos2024</code>
-                </div>
-              </div>
-              <p className="demo-note">
-                <small>Plateforme réservée à la famille et aux collaborateurs</small>
-              </p>
-            </div>
           </div>
         </div>
       </div>
