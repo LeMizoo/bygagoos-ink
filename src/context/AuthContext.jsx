@@ -1,4 +1,4 @@
-// frontend/src/context/AuthContext.jsx
+// src/context/AuthContext.jsx
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import api from '../services/api';
 
@@ -30,27 +30,35 @@ export const AuthProvider = ({ children }) => {
       const token = localStorage.getItem('bygagoos_token');
       const userData = localStorage.getItem('bygagoos_user');
 
-      console.log('��� Vérification d\'authentification');
+      if (import.meta.env.DEV) {
+        console.log('[Auth] Vérification d\'authentification', { 
+          token: token ? 'Présent' : 'Absent', 
+          userData: userData ? 'Présent' : 'Absent' 
+        });
+      }
 
       if (token && userData) {
         try {
           const parsedUser = JSON.parse(userData);
+          if (import.meta.env.DEV) {
+            console.log('[Auth] Session restaurée:', parsedUser.email);
+          }
           setUser(parsedUser);
           setIsAuthenticated(true);
           
           // Configurer Axios avec le token pour les requêtes futures
           api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-          
-          console.log('✅ Session restaurée:', parsedUser.email);
         } catch (parseError) {
-          console.error('❌ Erreur de parsing des données utilisateur:', parseError);
+          console.error('[Auth] Erreur de parsing des données utilisateur:', parseError);
           logout();
         }
       } else {
-        console.log('��� Aucune session active trouvée');
+        if (import.meta.env.DEV) {
+          console.log('[Auth] Aucune session active trouvée');
+        }
       }
     } catch (error) {
-      console.error('❌ Erreur lors de la vérification d\'authentification:', error);
+      console.error('[Auth] Erreur lors de la vérification d\'authentification:', error);
       setError('Erreur de vérification d\'authentification');
     } finally {
       setLoading(false);
@@ -60,13 +68,16 @@ export const AuthProvider = ({ children }) => {
   // Fonction de connexion avec support du mode démo
   const login = async (credentials) => {
     setError(null);
-    console.log('��� Tentative de connexion avec:', credentials.email);
+    if (import.meta.env.DEV) {
+      console.log('[Auth] Tentative de connexion avec:', credentials.email);
+    }
 
     try {
       // MODE DÉMO - Utilisateur de test
       if (credentials.email === 'demo@bygagoos.com' && credentials.password === 'demo123') {
-        
-        console.log('��� Mode démo activé');
+        if (import.meta.env.DEV) {
+          console.log('[Auth] Mode démo activé');
+        }
         
         const demoUser = {
           id: 1,
@@ -93,12 +104,16 @@ export const AuthProvider = ({ children }) => {
         setUser(demoUser);
         setIsAuthenticated(true);
         
-        console.log('✅ Connexion démo réussie');
+        if (import.meta.env.DEV) {
+          console.log('[Auth] Connexion démo réussie');
+        }
         return { success: true, user: demoUser, token: demoToken };
       }
 
       // MODE PRODUCTION - Connexion réelle avec l'API
-      console.log('��� Tentative de connexion avec l\'API');
+      if (import.meta.env.DEV) {
+        console.log('[Auth] Tentative de connexion avec l\'API');
+      }
       const response = await api.post('/auth/login', credentials);
       
       if (response.data.success) {
@@ -115,7 +130,9 @@ export const AuthProvider = ({ children }) => {
         setUser(userData);
         setIsAuthenticated(true);
         
-        console.log('✅ Connexion API réussie');
+        if (import.meta.env.DEV) {
+          console.log('[Auth] Connexion API réussie');
+        }
         return { success: true, user: userData, token };
       } else {
         setError(response.data.message || 'Échec de connexion');
@@ -123,7 +140,7 @@ export const AuthProvider = ({ children }) => {
       }
       
     } catch (error) {
-      console.error('❌ Erreur de connexion:', error);
+      console.error('[Auth] Erreur de connexion:', error);
       
       // Gestion des erreurs spécifiques
       let errorMessage = 'Erreur de connexion';
@@ -153,7 +170,9 @@ export const AuthProvider = ({ children }) => {
   // Fonction d'inscription
   const register = async (userData) => {
     setError(null);
-    console.log('��� Tentative d\'inscription:', { email: userData.email });
+    if (import.meta.env.DEV) {
+      console.log('[Auth] Tentative d\'inscription:', { email: userData.email });
+    }
 
     try {
       const response = await api.post('/auth/register', userData);
@@ -172,7 +191,9 @@ export const AuthProvider = ({ children }) => {
         setUser(newUser);
         setIsAuthenticated(true);
         
-        console.log('✅ Inscription réussie');
+        if (import.meta.env.DEV) {
+          console.log('[Auth] Inscription réussie');
+        }
         return { success: true, user: newUser, token };
       } else {
         setError(response.data.message || 'Échec d\'inscription');
@@ -180,7 +201,7 @@ export const AuthProvider = ({ children }) => {
       }
       
     } catch (error) {
-      console.error('❌ Erreur d\'inscription:', error);
+      console.error('[Auth] Erreur d\'inscription:', error);
       
       let errorMessage = 'Erreur d\'inscription';
       if (error.response?.data?.message) {
@@ -194,7 +215,9 @@ export const AuthProvider = ({ children }) => {
 
   // Fonction de déconnexion
   const logout = () => {
-    console.log('��� Déconnexion en cours...');
+    if (import.meta.env.DEV) {
+      console.log('[Auth] Déconnexion en cours...');
+    }
     
     // Supprimer les données d'authentification
     localStorage.removeItem('bygagoos_token');
@@ -208,7 +231,9 @@ export const AuthProvider = ({ children }) => {
     setIsAuthenticated(false);
     setError(null);
     
-    console.log('✅ Déconnexion réussie');
+    if (import.meta.env.DEV) {
+      console.log('[Auth] Déconnexion réussie');
+    }
     
     // Rediriger vers la page de connexion
     window.location.href = '/login';
@@ -220,10 +245,12 @@ export const AuthProvider = ({ children }) => {
       const updatedUser = { ...user, ...newUserData };
       setUser(updatedUser);
       localStorage.setItem('bygagoos_user', JSON.stringify(updatedUser));
-      console.log('✅ Utilisateur mis à jour');
+      if (import.meta.env.DEV) {
+        console.log('[Auth] Utilisateur mis à jour');
+      }
       return { success: true, user: updatedUser };
     } catch (error) {
-      console.error('❌ Erreur lors de la mise à jour:', error);
+      console.error('[Auth] Erreur lors de la mise à jour:', error);
       return { success: false, error: 'Erreur de mise à jour' };
     }
   };

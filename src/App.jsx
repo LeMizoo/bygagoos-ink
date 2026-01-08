@@ -1,3 +1,5 @@
+// @ts-check
+// Configuration React Router v6
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
