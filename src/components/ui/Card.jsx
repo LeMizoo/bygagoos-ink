@@ -1,83 +1,41 @@
-// frontend/src/components/ui/Card.jsx
 import React from 'react';
 import './Card.css';
 
-export const Card = ({ 
+const Card = ({ 
   children, 
-  className = '', 
-  hover = true, 
-  padding = true,
-  shadow = 'md',
-  rounded = 'xl',
-  border = true
+  title,
+  subtitle,
+  footer,
+  className = '',
+  style = {},
+  headerAction,
+  ...props 
 }) => {
+  return (
+    <div className={`card ${className}`} style={style} {...props}>
+      {(title || headerAction) && (
+        <div className="card-header">
+          <div className="card-title-section">
+            {title && <h3 className="card-title">{title}</h3>}
+            {subtitle && <p className="card-subtitle">{subtitle}</p>}
+          </div>
+          {headerAction && (
+            <div className="card-header-action">
+              {headerAction}
+            </div>
+          )}
+        </div>
+      )}
+      <div className="card-body">
+        {children}
+      </div>
+      {footer && (
+        <div className="card-footer">
+          {footer}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default Card;
-  const shadowClasses = {
-    none: '',
-    sm: 'shadow-sm',
-    md: 'shadow-md',
-    lg: 'shadow-lg',
-    xl: 'shadow-xl'
-  };
-
-  const roundedClasses = {
-    none: '',
-    sm: 'rounded-sm',
-    md: 'rounded-md',
-    lg: 'rounded-lg',
-    xl: 'rounded-xl',
-    '2xl': 'rounded-2xl'
-  };
-
-  return (
-    <div 
-      className={`
-        card
-        ${border ? 'card-border' : ''}
-        ${shadowClasses[shadow] || shadowClasses.md}
-        ${roundedClasses[rounded] || roundedClasses.xl}
-        ${hover ? 'card-hover' : ''}
-        ${padding ? 'p-6' : ''}
-        ${className}
-      `}
-    >
-      {children}
-    </div>
-  );
-};
-
-export const CardHeader = ({ 
-  children, 
-  className = '',
-  divider = false
-}) => {
-  return (
-    <div className={`card-header ${divider ? 'card-header-divider' : ''} ${className}`}>
-      {children}
-    </div>
-  );
-};
-
-export const CardBody = ({ 
-  children, 
-  className = '',
-  padding = true
-}) => {
-  return (
-    <div className={`card-body ${padding ? 'card-body-padding' : ''} ${className}`}>
-      {children}
-    </div>
-  );
-};
-
-export const CardFooter = ({ 
-  children, 
-  className = '',
-  divider = false
-}) => {
-  return (
-    <div className={`card-footer ${divider ? 'card-footer-divider' : ''} ${className}`}>
-      {children}
-    </div>
-  );
-};

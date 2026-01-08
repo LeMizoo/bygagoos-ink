@@ -1,0 +1,8 @@
+# Ignore archives et backups
+src/archive/**
+src/temp_backup/**
+
+# node_modules et build
+node_modules/
+dist/
+build/

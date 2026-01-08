@@ -1,76 +1,54 @@
-// frontend/src/components/ui/Button.jsx
 import React from 'react';
 import './Button.css';
 
-export const Button = ({ 
+const Button = ({ 
   children, 
-  variant = 'primary', 
-  size = 'md',
-  icon: Icon,
-  iconPosition = 'left',
-  className = '',
+  variant = 'primary',
+  size = 'medium',
+  onClick, 
   disabled = false,
-  loading = false,
-  onClick,
   type = 'button',
+  className = '',
   ...props 
 }) => {
-export default Button;
-  const baseClasses = 'btn inline-flex items-center justify-center';
+  const baseClasses = 'btn';
   const variantClasses = {
     primary: 'btn-primary',
     secondary: 'btn-secondary',
     success: 'btn-success',
     danger: 'btn-danger',
-    outline: 'btn-outline',
-    ghost: 'btn-ghost',
+    warning: 'btn-warning',
+    info: 'btn-info',
+    light: 'btn-light',
+    dark: 'btn-dark',
+    outline: 'btn-outline'
   };
   
   const sizeClasses = {
-    sm: 'btn-sm',
-    md: 'btn-md',
-    lg: 'btn-lg',
+    small: 'btn-sm',
+    medium: '',
+    large: 'btn-lg'
   };
 
-  const iconSizeClasses = {
-    sm: 'w-4 h-4',
-    md: 'w-4 h-4',
-    lg: 'w-5 h-5',
-  };
+  const classes = [
+    baseClasses,
+    variantClasses[variant] || variantClasses.primary,
+    sizeClasses[size] || '',
+    disabled ? 'btn-disabled' : '',
+    className
+  ].filter(Boolean).join(' ');
 
   return (
     <button
       type={type}
-      className={`
-        ${baseClasses}
-        ${variantClasses[variant] || 'btn-primary'}
-        ${sizeClasses[size] || 'btn-md'}
-        ${disabled ? 'btn-disabled opacity-50 cursor-not-allowed' : ''}
-        ${loading ? 'cursor-wait' : ''}
-        ${className}
-        transition-all duration-200 ease-in-out
-        focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
-      `}
-      disabled={disabled || loading}
+      className={classes}
       onClick={onClick}
+      disabled={disabled}
       {...props}
     >
-      {loading ? (
-        <>
-          <div className={`btn-spinner ${iconSizeClasses[size]}`}></div>
-          {children && <span className="ml-2">{children}</span>}
-        </>
-      ) : (
-        <>
-          {Icon && iconPosition === 'left' && (
-            <Icon className={`btn-icon-left ${iconSizeClasses[size]} ${children ? 'mr-2' : ''}`} />
-          )}
-          {children && <span>{children}</span>}
-          {Icon && iconPosition === 'right' && (
-            <Icon className={`btn-icon-right ${iconSizeClasses[size]} ${children ? 'ml-2' : ''}`} />
-          )}
-        </>
-      )}
+      {children}
     </button>
   );
 };
+
+export default Button;

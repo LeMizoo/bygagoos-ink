@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import React, { useState } from 'react';
 import { MobileLayout, MobileSection, MobileCard } from '../components/layout/MobileLayout';
 import { ResponsiveTable } from '../components/ui/ResponsiveTable';

@@ -43,7 +43,7 @@ const RegisterPage = () => {
     
     if (!formData.phone.trim()) {
       newErrors.phone = 'Le téléphone est requis';
-    } else if (!/^\+?[0-9\s\-]{8,}$/.test(formData.phone.replace(/\s/g, ''))) {
+    } else if (!/^\+?[0-9\s-]{8,}$/.test(formData.phone.replace(/\s/g, ''))) {
       newErrors.phone = 'Numéro invalide (ex: +261 34 12 345 67)';
     }
     
