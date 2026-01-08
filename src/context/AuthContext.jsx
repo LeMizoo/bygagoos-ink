@@ -1,273 +1,109 @@
-import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
+// frontend/src/context/AuthContext.jsx
+import React, { createContext, useState, useEffect, useContext } from 'react';
+import api from '../services/api';
 
-// Créer le contexte d'authentification
 export const AuthContext = createContext();
 
 // Hook personnalisé pour utiliser le contexte
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth doit être utilisé à l\'intérieur d\'AuthProvider');
+    throw new Error('useAuth doit être utilisé à l\'intérieur de AuthProvider');
   }
   return context;
 };
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [logoutRequested, setLogoutRequested] = useState(false);
-
-  // Fonction pour vérifier l'authentification depuis localStorage
-  const checkAuthFromStorage = useCallback(() => {
-    try {
-      const token = localStorage.getItem('family_token');
-      const userData = localStorage.getItem('user');
-      
-      if (token && userData) {
-        const parsedUser = JSON.parse(userData);
-        setUser(parsedUser);
-        setIsAuthenticated(true);
-        return true;
-      }
-      return false;
-    } catch (err) {
-      console.error('Erreur vérification auth depuis storage:', err);
-      return false;
-    }
-  }, []);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // Vérifier l'authentification au chargement
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        // D'abord essayer de récupérer depuis localStorage
-        if (!checkAuthFromStorage()) {
-          // Mode démo : auto-login pour le développement
-          const demoUser = {
-            id: 1,
-            username: 'famille',
-            name: 'Famille Gagoos Ink',
-            email: 'contact@bygagoos-ink.mg',
-            role: 'admin',
-            avatar: '👨‍👩‍👧‍👦',
-            permissions: ['read', 'write', 'delete', 'admin'],
-            familyMembers: [
-              { name: 'Tovoniaina', role: 'Fondateur' },
-              { name: 'Volatiana', role: 'Directrice Générale' },
-              { name: 'Miantsatiana', role: 'Directrice Opérations' },
-              { name: 'Tia Faniry', role: 'Directrice Administrative' }
-            ]
-          };
-
-          const demoToken = 'demo-token-' + Date.now();
-          localStorage.setItem('family_token', demoToken);
-          localStorage.setItem('user', JSON.stringify(demoUser));
-          setUser(demoUser);
-          setIsAuthenticated(true);
-        }
-      } catch (err) {
-        console.error('Erreur vérification auth:', err);
-        setError('Erreur lors de la vérification de l\'authentification');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     checkAuth();
-  }, [checkAuthFromStorage]);
+  }, []);
 
-  // Écouter les changements de localStorage (pour les autres onglets)
-  useEffect(() => {
-    const handleStorageChange = (e) => {
-      if (e.key === 'family_token' || e.key === 'user') {
-        checkAuthFromStorage();
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, [checkAuthFromStorage]);
-
-  // Fonction de connexion
-  const login = async (username, password) => {
-    setLoading(true);
-    setError(null);
-    
+  const checkAuth = async () => {
     try {
-      // Simulation de login avec identifiants de démo
-      if (username === 'famille' && password === 'gagoos2024') {
-        const userData = {
-          id: 1,
-          username: 'famille',
-          name: 'Famille Gagoos Ink',
-          email: 'contact@bygagoos-ink.mg',
-          role: 'admin',
-          avatar: '👨‍👩‍👧‍👦',
-          permissions: ['read', 'write', 'delete', 'admin'],
-          familyMembers: [
-            { name: 'Tovoniaina', role: 'Fondateur' },
-            { name: 'Volatiana', role: 'Directrice Générale' },
-            { name: 'Miantsatiana', role: 'Directrice Opérations' },
-            { name: 'Tia Faniry', role: 'Directrice Administrative' }
-          ],
-          lastLogin: new Date().toISOString()
-        };
-        
-        const token = 'family-token-' + Date.now();
-        
-        // Stocker dans localStorage
-        localStorage.setItem('family_token', token);
-        localStorage.setItem('user', JSON.stringify(userData));
-        
-        // Mettre à jour le contexte
-        setUser(userData);
+      const token = localStorage.getItem('bygagoos_token');
+      const userData = localStorage.getItem('bygagoos_user');
+
+      console.log('🔍 Auth check:', { token, userData });
+
+      if (token && userData) {
+        // Utiliser directement les données locales (mode démo)
+        console.log('✅ Utilisation des données locales');
+        setUser(JSON.parse(userData));
         setIsAuthenticated(true);
-        setError(null);
         
-        return { 
-          success: true, 
-          user: userData,
-          redirectTo: '/app/dashboard'
-        };
-      } else if (username === 'demo' && password === 'demo') {
-        // Mode démo avec moins de permissions
-        const demoUser = {
-          id: 2,
-          username: 'demo',
-          name: 'Utilisateur Démo',
-          email: 'demo@bygagoos-ink.mg',
-          role: 'user',
-          avatar: '👤',
-          permissions: ['read'],
-          familyMembers: [],
-          lastLogin: new Date().toISOString()
-        };
-        
-        const token = 'demo-token-' + Date.now();
-        localStorage.setItem('family_token', token);
-        localStorage.setItem('user', JSON.stringify(demoUser));
-        
-        setUser(demoUser);
-        setIsAuthenticated(true);
-        setError(null);
-        
-        return { 
-          success: true, 
-          user: demoUser,
-          redirectTo: '/app/dashboard'
-        };
+        // Configurer Axios avec le token
+        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       } else {
-        const errorMsg = 'Identifiants incorrects. Essayez: famille / gagoos2024 ou demo / demo';
-        setError(errorMsg);
-        return { 
-          success: false, 
-          error: errorMsg 
-        };
+        console.log('🔐 Pas de token trouvé');
       }
-    } catch (err) {
-      console.error('Erreur login:', err);
-      const errorMsg = 'Échec de connexion. Veuillez réessayer.';
-      setError(errorMsg);
-      return { 
-        success: false, 
-        error: errorMsg 
-      };
+    } catch (error) {
+      console.error('❌ Auth check error:', error);
+      logout();
     } finally {
       setLoading(false);
+      console.log('✅ Auth check terminé, loading:', false);
     }
   };
 
-  // Fonction de déconnexion - marque la demande de déconnexion
-  const logout = useCallback(() => {
+  const login = async (token, userData) => {
+    console.log('🔑 Login:', { token, userData });
     try {
-      // Nettoyer le localStorage
-      localStorage.removeItem('family_token');
-      localStorage.removeItem('user');
+      // Stocker le token et les données utilisateur
+      localStorage.setItem('bygagoos_token', token);
+      localStorage.setItem('bygagoos_user', JSON.stringify(userData));
       
-      // Réinitialiser le contexte
-      setUser(null);
-      setIsAuthenticated(false);
-      setError(null);
+      // Configurer Axios pour les requêtes futures
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       
-      // Marquer qu'une déconnexion a été demandée
-      setLogoutRequested(true);
+      // Mettre à jour l'état
+      setUser(userData);
+      setIsAuthenticated(true);
       
-      console.log('Déconnexion demandée');
-      
-    } catch (err) {
-      console.error('Erreur lors de la déconnexion:', err);
+      console.log('✅ Login réussi');
+      return true;
+    } catch (error) {
+      console.error('❌ Login error:', error);
+      return false;
     }
-  }, []);
+  };
 
-  // Fonction pour réinitialiser la demande de déconnexion
-  const resetLogoutRequest = useCallback(() => {
-    setLogoutRequested(false);
-  }, []);
+  const logout = () => {
+    console.log('🚪 Logout');
+    // Supprimer les données d'authentification
+    localStorage.removeItem('bygagoos_token');
+    localStorage.removeItem('bygagoos_user');
+    
+    // Supprimer l'en-tête Authorization
+    delete api.defaults.headers.common['Authorization'];
+    
+    // Réinitialiser l'état
+    setUser(null);
+    setIsAuthenticated(false);
+  };
 
-  // Rafraîchir l'authentification
-  const refreshAuth = useCallback(() => {
-    return checkAuthFromStorage();
-  }, [checkAuthFromStorage]);
-
-  const updateUser = (userData) => {
-    const updatedUser = { ...user, ...userData };
+  const updateUser = (newUserData) => {
+    const updatedUser = { ...user, ...newUserData };
     setUser(updatedUser);
-    localStorage.setItem('user', JSON.stringify(updatedUser));
+    localStorage.setItem('bygagoos_user', JSON.stringify(updatedUser));
   };
 
-  const hasPermission = (permission) => {
-    if (!user || !user.permissions) return false;
-    return user.permissions.includes(permission) || user.permissions.includes('admin');
-  };
-
-  const hasRole = (role) => {
-    return user?.role === role;
-  };
-
-  // Fonction pour vérifier si le token existe
-  const checkTokenExists = () => {
-    return !!localStorage.getItem('family_token');
-  };
-
-  // Vérifier périodiquement l'authentification
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (isAuthenticated) {
-        const tokenExists = !!localStorage.getItem('family_token');
-        if (!tokenExists) {
-          console.warn('Token perdu, rafraîchissement de l\'authentification...');
-          refreshAuth();
-        }
-      }
-    }, 30000);
-
-    return () => clearInterval(interval);
-  }, [isAuthenticated, refreshAuth]);
-
-  // Valeurs du contexte
-  const contextValue = {
+  const value = {
     user,
-    isAuthenticated,
     loading,
-    error,
+    isAuthenticated,
     login,
     logout,
-    logoutRequested,
-    resetLogoutRequest,
     updateUser,
-    hasPermission,
-    hasRole,
-    checkTokenExists,
-    refreshAuth
+    checkAuth
   };
 
   return (
-    <AuthContext.Provider value={contextValue}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

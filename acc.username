@@ -1,0 +1,1 @@
+    const account = accounts.find(acc = === username 

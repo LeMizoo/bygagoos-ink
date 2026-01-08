@@ -1,0 +1,23 @@
+/* OrderEditPage Styles */
+.container {
+    padding: 2rem;
+    background: #f8f9fa;
+    min-height: 100vh;
+}
+
+.header {
+    margin-bottom: 2rem;
+}
+
+.title {
+    font-size: 1.8rem;
+    color: #333;
+    font-weight: 600;
+}
+
+.content {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}

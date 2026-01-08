@@ -10,6 +10,7 @@ export const Table = ({
   compact = false,
   responsive = true
 }) => {
+export default Table;
   return (
     <div className={`table-container ${responsive ? 'table-responsive' : ''}`}>
       <table className={`

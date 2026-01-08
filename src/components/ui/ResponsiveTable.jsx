@@ -9,6 +9,7 @@ export const ResponsiveTable = ({
   onRowClick,
   emptyMessage = "Aucune donnée disponible"
 }) => {
+export default ResponsiveTable;
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(defaultItemsPerPage);
 

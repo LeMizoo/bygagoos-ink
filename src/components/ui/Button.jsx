@@ -15,6 +15,7 @@ export const Button = ({
   type = 'button',
   ...props 
 }) => {
+export default Button;
   const baseClasses = 'btn inline-flex items-center justify-center';
   const variantClasses = {
     primary: 'btn-primary',

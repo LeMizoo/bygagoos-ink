@@ -11,6 +11,7 @@ export const Card = ({
   rounded = 'xl',
   border = true
 }) => {
+export default Card;
   const shadowClasses = {
     none: '',
     sm: 'shadow-sm',

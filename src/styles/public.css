@@ -1,0 +1,23 @@
+
+.public-container {
+  background: #f8fafc;
+  min-height: 100vh;
+  padding-top: var(--navbar-height, 64px);
+}
+
+.public-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.public-content h1,
+.public-content h2 {
+  color: #1e293b;
+  font-weight: 700;
+}
+
+.public-content p {
+  color: #64748b;
+  line-height: 1.6;
+}

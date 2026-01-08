@@ -1,0 +1,505 @@
+.stock-page {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Overview Stats */
+.overview-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.overview-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border: 1px solid #f1f5f9;
+  transition: transform 0.3s ease;
+}
+
+.overview-card:hover {
+  transform: translateY(-5px);
+}
+
+.overview-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+}
+
+.overview-icon.total {
+  background: rgba(76, 201, 240, 0.1);
+  color: #4cc9f0;
+}
+
+.overview-icon.value {
+  background: rgba(255, 214, 102, 0.1);
+  color: #ffd166;
+}
+
+.overview-icon.low {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.overview-icon.categories {
+  background: rgba(139, 92, 246, 0.1);
+  color: #8b5cf6;
+}
+
+.overview-content {
+  flex: 1;
+}
+
+.overview-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.25rem;
+}
+
+.overview-label {
+  color: #64748b;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Categories */
+.categories-section {
+  margin-bottom: 2rem;
+}
+
+.categories-section h3 {
+  font-size: 1.25rem;
+  color: #1e293b;
+  margin-bottom: 1rem;
+}
+
+.categories-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.category-card {
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.category-card:hover {
+  border-color: #cbd5e1;
+  transform: translateY(-2px);
+}
+
+.category-card.active {
+  border-color: #4cc9f0;
+  background: rgba(76, 201, 240, 0.05);
+  box-shadow: 0 4px 20px rgba(76, 201, 240, 0.1);
+}
+
+.category-icon {
+  font-size: 2rem;
+}
+
+.category-name {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #475569;
+  text-align: center;
+}
+
+.category-count {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  background: #f1f5f9;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+}
+
+/* Alert Section */
+.alert-section {
+  margin-bottom: 2rem;
+}
+
+.alert {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  background: #fffbeb;
+  border: 1px solid #fbbf24;
+}
+
+.alert-icon {
+  font-size: 1.5rem;
+}
+
+.alert-content {
+  flex: 1;
+}
+
+.alert-title {
+  font-weight: 600;
+  color: #92400e;
+  margin-bottom: 0.25rem;
+}
+
+.alert-message {
+  color: #b45309;
+  font-size: 0.9rem;
+}
+
+.alert-action {
+  background: #f59e0b;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.alert-action:hover {
+  background: #d97706;
+}
+
+/* Stock Table */
+.stock-table-container {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border: 1px solid #f1f5f9;
+  margin-bottom: 2rem;
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.table-header h3 {
+  font-size: 1.25rem;
+  color: #1e293b;
+  margin: 0;
+}
+
+.table-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.table-actions .action-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: white;
+  color: #475569;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.table-actions .action-btn:hover {
+  background: #f8fafc;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.stock-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1200px;
+}
+
+.stock-table th {
+  padding: 1rem 1.5rem;
+  text-align: left;
+  font-weight: 600;
+  color: #475569;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.stock-table td {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #f1f5f9;
+  color: #1e293b;
+}
+
+.stock-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.item-name {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 500;
+}
+
+.item-icon {
+  font-size: 1.2rem;
+}
+
+.sku {
+  font-family: monospace;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.quantity-value {
+  font-weight: 600;
+}
+
+.quantity-value.low {
+  color: #ef4444;
+}
+
+.quantity-value.warning {
+  color: #f59e0b;
+}
+
+.quantity-value.good {
+  color: #10b981;
+}
+
+.min-quantity {
+  color: #64748b;
+}
+
+.price,
+.total-value {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.supplier {
+  color: #475569;
+  font-size: 0.9rem;
+}
+
+.location {
+  font-family: monospace;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.stock-status {
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.item-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.icon-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-btn.edit {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.icon-btn.edit:hover {
+  background: rgba(16, 185, 129, 0.2);
+}
+
+.icon-btn.restock {
+  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.icon-btn.restock:hover {
+  background: rgba(59, 130, 246, 0.2);
+}
+
+.icon-btn.delete {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.icon-btn.delete:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+/* Recent Orders */
+.recent-orders {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border: 1px solid #f1f5f9;
+}
+
+.recent-orders h3 {
+  font-size: 1.25rem;
+  color: #1e293b;
+  margin-bottom: 1.5rem;
+}
+
+.orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.order-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.order-icon {
+  font-size: 1.5rem;
+  width: 48px;
+  height: 48px;
+  background: white;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.order-details {
+  flex: 1;
+}
+
+.order-name {
+  font-weight: 500;
+  color: #1e293b;
+  margin-bottom: 0.25rem;
+}
+
+.order-info {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.85rem;
+}
+
+.order-date {
+  color: #64748b;
+}
+
+.order-status {
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.order-status.pending {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+
+.order-status.delivered {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.order-amount {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 1.1rem;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .overview-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .stock-page {
+    padding: 1.5rem;
+  }
+  
+  .categories-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .table-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  
+  .alert {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .order-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .stock-page {
+    padding: 1rem;
+  }
+  
+  .overview-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .categories-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

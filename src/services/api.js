@@ -7,26 +7,16 @@ const getApiConfig = () => {
   const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   const isVercel = window.location.hostname.includes('vercel.app');
   
-  // URL par défaut
-  let baseURL = import.meta.env.VITE_API_URL || 'https://bygagoos-ink-backend.vercel.app/api';
+  // URL par défaut pour le mode démo
+  let baseURL = 'http://localhost:3001/api';
   
-  // Mode développement local
-  if (isDev && isLocalhost) {
-    baseURL = 'http://localhost:3001/api';
-    
-    // Vérifier si le backend local est disponible
-    fetch('http://localhost:3001/health')
-      .then(() => console.log('✅ Backend local détecté sur http://localhost:3001'))
-      .catch(() => {
-        console.warn('⚠️ Backend local non disponible. Utilisation du backend distant.');
-        baseURL = 'https://bygagoos-ink-backend.vercel.app/api';
-      });
+  // Mode production - utiliser le backend démo
+  if (!isDev && !isLocalhost) {
+    baseURL = 'https://bygagoos-ink-backend.vercel.app/api';
   }
   
-  // Mode Vercel - utiliser le même domaine
-  if (isVercel && !isDev) {
-    baseURL = '/api'; // Proxy via Vercel
-  }
+  console.log(`[API] Configuration: ${baseURL}`);
+  console.log(`[API] Environnement: ${isDev ? 'dev' : 'prod'}, Localhost: ${isLocalhost}`);
   
   return { baseURL, isDev, isLocalhost };
 };
@@ -36,18 +26,13 @@ const config = getApiConfig();
 // Créer une instance axios
 const api = axios.create({
   baseURL: config.baseURL,
-  timeout: 30000, // 30 secondes pour les uploads
+  timeout: 15000, // 15 secondes
   headers: {
     'Content-Type': 'application/json',
-    'X-Requested-With': 'XMLHttpRequest',
     'Accept': 'application/json',
   },
   withCredentials: false,
 });
-
-// Cache pour éviter les requêtes répétitives
-const requestCache = new Map();
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 // Intercepteur pour les requêtes
 api.interceptors.request.use(
@@ -61,23 +46,7 @@ api.interceptors.request.use(
     // Headers métiers
     config.headers['X-Atelier'] = 'ByGagoos-Ink-Textile';
     config.headers['X-Location'] = 'Antananarivo-MG';
-    config.headers['X-Family-Business'] = 'true';
-    config.headers['X-App-Version'] = import.meta.env.VITE_APP_VERSION || '1.0.0';
-    
-    // Cache GET requests
-    if (config.method === 'get') {
-      const cacheKey = `${config.url}-${JSON.stringify(config.params)}`;
-      const cached = requestCache.get(cacheKey);
-      
-      if (cached && (Date.now() - cached.timestamp) < CACHE_DURATION) {
-        console.log(`[Cache] Utilisation du cache pour: ${config.url}`);
-        return Promise.reject({
-          config,
-          response: { data: cached.data, status: 200, headers: {}, config },
-          isCache: true,
-        });
-      }
-    }
+    config.headers['X-App-Version'] = '1.0.0';
     
     // Ajouter un timestamp pour éviter le cache du navigateur
     if (config.method === 'get') {
@@ -87,7 +56,7 @@ api.interceptors.request.use(
       };
     }
     
-    console.log(`[API] ${config.method?.toUpperCase()} ${config.url}`);
+    console.log(`[API] ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
     return config;
   },
   (error) => {
@@ -99,31 +68,13 @@ api.interceptors.request.use(
 // Intercepteur pour les réponses
 api.interceptors.response.use(
   (response) => {
-    // Mettre en cache les réponses GET réussies
-    if (response.config.method === 'get' && response.data) {
-      const cacheKey = `${response.config.url}-${JSON.stringify(response.config.params)}`;
-      requestCache.set(cacheKey, {
-        data: response.data,
-        timestamp: Date.now(),
-      });
-      
-      // Nettoyer le vieux cache
-      cleanupCache();
-    }
-    
     return response;
   },
   (error) => {
-    // Gérer le cache
-    if (error.isCache) {
-      return Promise.resolve(error.response);
-    }
-    
     console.error('[API] Erreur:', {
       url: error.config?.url,
       status: error.response?.status,
       message: error.message,
-      data: error.response?.data,
     });
     
     // Gestion des erreurs spécifiques
@@ -142,23 +93,11 @@ api.interceptors.response.use(
           }
           break;
           
-        case 403:
-          // Interdit
-          console.warn('Accès refusé:', data.message);
-          break;
-          
         case 404:
-          // Non trouvé
           console.warn('Ressource non trouvée:', error.config.url);
           break;
           
-        case 429:
-          // Trop de requêtes
-          console.warn('Trop de requêtes, veuillez patienter');
-          break;
-          
         case 500:
-          // Erreur serveur
           console.error('Erreur serveur:', data.message);
           break;
           
@@ -168,35 +107,17 @@ api.interceptors.response.use(
     } else if (error.request) {
       // Erreur réseau
       console.error('Erreur réseau - Vérifiez votre connexion internet');
+      console.warn('Le backend semble être hors ligne');
       
       if (config.isDev && config.isLocalhost) {
         console.warn('⚠️ Assurez-vous que le backend est démarré sur localhost:3001');
-        console.warn('   Lancer le backend: npm run dev dans le dossier backend/');
+        console.warn('   Lancer le backend: cd backend && npm run dev');
       }
     }
     
-    // Retourner une structure d'erreur uniforme
-    return Promise.reject({
-      status: error.response?.status,
-      message: error.response?.data?.message || error.message || 'Une erreur est survenue',
-      data: error.response?.data,
-      isNetworkError: !error.response,
-    });
+    return Promise.reject(error);
   }
 );
-
-// Nettoyer le cache
-function cleanupCache() {
-  const now = Date.now();
-  for (const [key, value] of requestCache.entries()) {
-    if (now - value.timestamp > CACHE_DURATION) {
-      requestCache.delete(key);
-    }
-  }
-}
-
-// Nettoyer le cache toutes les 10 minutes
-setInterval(cleanupCache, 10 * 60 * 1000);
 
 // Données de démo pour le développement
 const DEMO_DATA = {
@@ -216,18 +137,13 @@ const DEMO_DATA = {
       priority: 'HIGH',
       deliveryDate: '2024-01-25',
       createdAt: '2024-01-15T08:30:00',
-      orderItems: [
+      items: [
         {
-          id: 1,
+          product: 'T-shirt 100% Coton Premium',
           quantity: 100,
-          product: {
-            id: 1,
-            name: 'T-Shirts Blancs Premium',
-            price: 8000,
-            category: 'T-SHIRTS',
-          },
-          design: 'Logo TechMad',
+          unitPrice: 8000,
           colors: ['Blanc', 'Bleu'],
+          design: 'Logo TechMad',
         },
       ],
       notes: 'Impression recto-verso',
@@ -247,18 +163,13 @@ const DEMO_DATA = {
       priority: 'MEDIUM',
       deliveryDate: '2024-01-30',
       createdAt: '2024-01-14T14:20:00',
-      orderItems: [
+      items: [
         {
-          id: 2,
+          product: 'Sweatshirts Noir',
           quantity: 50,
-          product: {
-            id: 2,
-            name: 'Sweatshirts Noir',
-            price: 15000,
-            category: 'SWEATSHIRTS',
-          },
-          design: 'Logo FashionMG',
+          unitPrice: 15000,
           colors: ['Noir'],
+          design: 'Logo FashionMG',
         },
       ],
       notes: 'Livraison express',
@@ -308,7 +219,7 @@ const DEMO_DATA = {
   ],
 };
 
-// Services API avec fallback et cache
+// Services API avec fallback en mode démo
 export const authService = {
   login: async (email, password) => {
     try {
@@ -318,38 +229,63 @@ export const authService = {
       if (token) {
         localStorage.setItem('bygagoos_token', token);
         localStorage.setItem('bygagoos_user', JSON.stringify(user));
-        
-        // Ajouter le token à toutes les futures requêtes
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       }
       
       return response.data;
     } catch (error) {
-      if (config.isDev) {
-        console.warn('Utilisation des données de démo pour la connexion');
-        
-        // Données de démo pour le développement
-        const demoUser = {
-          id: 1,
-          name: 'Tovoniaina RAHENDRISON',
-          email: 'tovoniaina.rahendrison@gmail.com',
-          role: 'ADMIN',
-          avatar: '/profiles/tovoniaina.jpg',
-        };
-        
-        const demoToken = 'demo_token_' + Date.now();
-        
-        localStorage.setItem('bygagoos_token', demoToken);
-        localStorage.setItem('bygagoos_user', JSON.stringify(demoUser));
-        
-        return {
-          success: true,
-          token: demoToken,
-          user: demoUser,
-          message: 'Connexion réussie (mode démo)',
-        };
-      }
-      throw error;
+      console.warn('Utilisation des données de démo pour la connexion');
+      
+      // Données de démo pour le développement
+      const demoUser = {
+        id: 1,
+        name: 'Tovoniaina RAHENDRISON',
+        email: 'tovoniaina.rahendrison@gmail.com',
+        role: 'ADMIN',
+        avatar: '/profiles/tovoniaina.jpg',
+      };
+      
+      const demoToken = 'demo_token_' + Date.now();
+      
+      localStorage.setItem('bygagoos_token', demoToken);
+      localStorage.setItem('bygagoos_user', JSON.stringify(demoUser));
+      
+      return {
+        success: true,
+        token: demoToken,
+        user: demoUser,
+        message: 'Connexion réussie (mode démo)',
+      };
+    }
+  },
+  
+  register: async (clientData) => {
+    try {
+      const response = await api.post('/auth/register', clientData);
+      return response.data;
+    } catch (error) {
+      console.warn('Inscription client en mode démo');
+      
+      const newClient = {
+        id: Date.now(),
+        ...clientData,
+        role: 'CLIENT',
+        status: 'ACTIVE',
+        createdAt: new Date().toISOString(),
+        totalOrders: 0,
+        totalSpent: 0,
+      };
+      
+      const demoToken = 'demo_client_token_' + Date.now();
+      localStorage.setItem('bygagoos_token', demoToken);
+      localStorage.setItem('bygagoos_user', JSON.stringify(newClient));
+      
+      return {
+        success: true,
+        token: demoToken,
+        user: newClient,
+        message: 'Inscription réussie (mode démo)',
+      };
     }
   },
   
@@ -372,11 +308,8 @@ export const authService = {
       }
       return response.data;
     } catch (error) {
-      if (config.isDev) {
-        console.warn('Utilisation des données de démo pour la mise à jour du profil');
-        return { success: true, user: userData };
-      }
-      throw error;
+      console.warn('Mise à jour du profil en mode démo');
+      return { success: true, user: userData };
     }
   },
 };
@@ -387,20 +320,17 @@ export const ordersService = {
       const response = await api.get('/orders', { params });
       return response.data;
     } catch (error) {
-      if (config.isDev) {
-        console.warn('Utilisation des données de démo pour les commandes');
-        return {
-          success: true,
-          data: DEMO_DATA.orders,
-          pagination: {
-            total: DEMO_DATA.orders.length,
-            page: params.page || 1,
-            pages: 1,
-            limit: params.limit || 10,
-          },
-        };
-      }
-      throw error;
+      console.warn('Utilisation des données de démo pour les commandes');
+      return {
+        success: true,
+        data: DEMO_DATA.orders,
+        pagination: {
+          total: DEMO_DATA.orders.length,
+          page: params.page || 1,
+          pages: 1,
+          limit: params.limit || 10,
+        },
+      };
     }
   },
   
@@ -409,62 +339,46 @@ export const ordersService = {
       const response = await api.get(`/orders/${id}`);
       return response.data;
     } catch (error) {
-      if (config.isDev) {
-        console.warn('Utilisation des données de démo pour la commande');
-        const order = DEMO_DATA.orders.find(o => o.id === parseInt(id)) || DEMO_DATA.orders[0];
-        return { success: true, data: order };
-      }
-      throw error;
+      console.warn('Utilisation des données de démo pour la commande');
+      const order = DEMO_DATA.orders.find(o => o.id === parseInt(id)) || DEMO_DATA.orders[0];
+      return { success: true, data: order };
     }
   },
   
   create: async (orderData) => {
     try {
       const response = await api.post('/orders', orderData);
-      // Invalider le cache des commandes
-      requestCache.clear();
       return response.data;
     } catch (error) {
-      if (config.isDev) {
-        console.warn('Création de commande en mode démo');
-        const newOrder = {
-          ...orderData,
-          id: Date.now(),
-          orderNumber: `CMD-${new Date().getFullYear()}-${String(Date.now()).slice(-3)}`,
-          createdAt: new Date().toISOString(),
-          status: 'PENDING',
-        };
-        return { success: true, data: newOrder };
-      }
-      throw error;
+      console.warn('Création de commande en mode démo');
+      const newOrder = {
+        ...orderData,
+        id: Date.now(),
+        orderNumber: `CMD-${new Date().getFullYear()}-${String(Date.now()).slice(-3)}`,
+        createdAt: new Date().toISOString(),
+        status: 'PENDING',
+      };
+      return { success: true, data: newOrder };
     }
   },
   
   update: async (id, orderData) => {
     try {
       const response = await api.put(`/orders/${id}`, orderData);
-      requestCache.clear();
       return response.data;
     } catch (error) {
-      if (config.isDev) {
-        console.warn('Mise à jour de commande en mode démo');
-        return { success: true, data: { ...orderData, id } };
-      }
-      throw error;
+      console.warn('Mise à jour de commande en mode démo');
+      return { success: true, data: { ...orderData, id } };
     }
   },
   
   delete: async (id) => {
     try {
       const response = await api.delete(`/orders/${id}`);
-      requestCache.clear();
       return response.data;
     } catch (error) {
-      if (config.isDev) {
-        console.warn('Suppression de commande en mode démo');
-        return { success: true, message: 'Commande supprimée' };
-      }
-      throw error;
+      console.warn('Suppression de commande en mode démo');
+      return { success: true, message: 'Commande supprimée' };
     }
   },
   
@@ -473,25 +387,8 @@ export const ordersService = {
       const response = await api.get('/orders/stats');
       return response.data;
     } catch (error) {
-      if (config.isDev) {
-        console.warn('Utilisation des stats de démo');
-        return { success: true, data: DEMO_DATA.stats };
-      }
-      throw error;
-    }
-  },
-  
-  updateStatus: async (id, status) => {
-    try {
-      const response = await api.patch(`/orders/${id}/status`, { status });
-      requestCache.clear();
-      return response.data;
-    } catch (error) {
-      if (config.isDev) {
-        console.warn('Mise à jour de statut en mode démo');
-        return { success: true, data: { id, status } };
-      }
-      throw error;
+      console.warn('Utilisation des stats de démo');
+      return { success: true, data: DEMO_DATA.stats };
     }
   },
 };
@@ -502,19 +399,16 @@ export const clientsService = {
       const response = await api.get('/clients', { params });
       return response.data;
     } catch (error) {
-      if (config.isDev) {
-        console.warn('Utilisation des données de démo pour les clients');
-        return {
-          success: true,
-          data: DEMO_DATA.clients,
-          pagination: {
-            total: DEMO_DATA.clients.length,
-            page: 1,
-            pages: 1,
-          },
-        };
-      }
-      throw error;
+      console.warn('Utilisation des données de démo pour les clients');
+      return {
+        success: true,
+        data: DEMO_DATA.clients,
+        pagination: {
+          total: DEMO_DATA.clients.length,
+          page: 1,
+          pages: 1,
+        },
+      };
     }
   },
   
@@ -523,48 +417,37 @@ export const clientsService = {
       const response = await api.get(`/clients/${id}`);
       return response.data;
     } catch (error) {
-      if (config.isDev) {
-        console.warn('Utilisation des données de démo pour le client');
-        const client = DEMO_DATA.clients.find(c => c.id === parseInt(id)) || DEMO_DATA.clients[0];
-        return { success: true, data: client };
-      }
-      throw error;
+      console.warn('Utilisation des données de démo pour le client');
+      const client = DEMO_DATA.clients.find(c => c.id === parseInt(id)) || DEMO_DATA.clients[0];
+      return { success: true, data: client };
     }
   },
   
   create: async (clientData) => {
     try {
       const response = await api.post('/clients', clientData);
-      requestCache.clear();
       return response.data;
     } catch (error) {
-      if (config.isDev) {
-        console.warn('Création de client en mode démo');
-        const newClient = {
-          ...clientData,
-          id: Date.now(),
-          totalOrders: 0,
-          totalSpent: 0,
-          status: 'ACTIVE',
-          createdAt: new Date().toISOString(),
-        };
-        return { success: true, data: newClient };
-      }
-      throw error;
+      console.warn('Création de client en mode démo');
+      const newClient = {
+        ...clientData,
+        id: Date.now(),
+        totalOrders: 0,
+        totalSpent: 0,
+        status: 'ACTIVE',
+        createdAt: new Date().toISOString(),
+      };
+      return { success: true, data: newClient };
     }
   },
   
   update: async (id, clientData) => {
     try {
       const response = await api.put(`/clients/${id}`, clientData);
-      requestCache.clear();
       return response.data;
     } catch (error) {
-      if (config.isDev) {
-        console.warn('Mise à jour de client en mode démo');
-        return { success: true, data: { ...clientData, id } };
-      }
-      throw error;
+      console.warn('Mise à jour de client en mode démo');
+      return { success: true, data: { ...clientData, id } };
     }
   },
 };
@@ -575,31 +458,38 @@ export const dashboardService = {
       const response = await api.get('/dashboard/stats');
       return response.data;
     } catch (error) {
-      if (config.isDev) {
-        console.warn('Utilisation des stats dashboard de démo');
-        return { success: true, data: DEMO_DATA.stats };
-      }
-      throw error;
+      console.warn('Utilisation des stats dashboard de démo');
+      return { success: true, data: DEMO_DATA.stats };
     }
   },
-  
-  getRecentActivity: async () => {
+};
+
+export const productsService = {
+  getAll: async () => {
     try {
-      const response = await api.get('/dashboard/activity');
+      const response = await api.get('/products');
       return response.data;
     } catch (error) {
-      if (config.isDev) {
-        console.warn('Utilisation des activités de démo');
-        return {
-          success: true,
-          data: [
-            { type: 'ORDER_CREATED', description: 'Nouvelle commande #CMD-2024-003', date: '2024-01-16T10:30:00' },
-            { type: 'ORDER_UPDATED', description: 'Statut mis à jour pour #CMD-2024-001', date: '2024-01-15T16:45:00' },
-            { type: 'CLIENT_ADDED', description: 'Nouveau client ajouté', date: '2024-01-15T14:20:00' },
-          ],
-        };
-      }
-      throw error;
+      console.warn('Utilisation des produits de démo');
+      return {
+        success: true,
+        data: [
+          {
+            id: 1,
+            name: 'T-shirt 100% Coton Premium',
+            category: 'T-SHIRTS',
+            price: 12500,
+            stock: 1500,
+          },
+          {
+            id: 2,
+            name: 'Sweat à capuche',
+            category: 'SWEATSHIRTS',
+            price: 25000,
+            stock: 800,
+          },
+        ],
+      };
     }
   },
 };
@@ -607,30 +497,89 @@ export const dashboardService = {
 export const stockService = {
   getConsumables: async () => {
     try {
-      const response = await api.get('/stock/consumables');
+      const response = await api.get('/stock');
       return response.data;
     } catch (error) {
-      if (config.isDev) {
-        console.warn('Utilisation des consommables de démo');
-        return {
-          success: true,
-          data: [
-            { id: 1, name: 'Encre Noir', category: 'ENCRE', quantity: 15, unit: 'L', minQuantity: 5 },
-            { id: 2, name: 'Encre Blanc', category: 'ENCRE', quantity: 8, unit: 'L', minQuantity: 5 },
-            { id: 3, name: 'Tissu Coton 150g', category: 'TISSU', quantity: 120, unit: 'm', minQuantity: 50 },
-            { id: 4, name: 'Écrans Sérigraphie', category: 'MATERIEL', quantity: 25, unit: 'unité', minQuantity: 10 },
-          ],
-        };
-      }
-      throw error;
+      console.warn('Utilisation des consommables de démo');
+      return {
+        success: true,
+        data: [
+          { id: 1, name: 'Encre Noir', category: 'ENCRE', quantity: 15, unit: 'L', minQuantity: 5 },
+          { id: 2, name: 'Encre Blanc', category: 'ENCRE', quantity: 8, unit: 'L', minQuantity: 5 },
+        ],
+      };
     }
   },
 };
 
-// Utilitaires
-export const clearCache = () => {
-  requestCache.clear();
-  console.log('[API] Cache nettoyé');
+export const publicService = {
+  getGallery: async (category = 'all') => {
+    try {
+      const response = await api.get('/public/gallery', { params: { category } });
+      return response.data;
+    } catch (error) {
+      console.warn('Utilisation de la galerie de démo');
+      return {
+        success: true,
+        data: {
+          images: [
+            {
+              id: 1,
+              url: '/profiles/miantsatiana.jpg',
+              title: 'Miantso',
+              category: 'team',
+              description: 'Directeur & Designer principal',
+            },
+            {
+              id: 2,
+              url: '/profiles/tia-faniry.jpg',
+              title: 'Faniry',
+              category: 'team',
+              description: 'Responsable Production',
+            },
+          ],
+          categories: [
+            { id: 'all', name: 'Toutes les images', count: 2 },
+            { id: 'team', name: 'L\'Équipe', count: 2 },
+          ],
+        },
+      };
+    }
+  },
+  
+  getCompanyInfo: async () => {
+    try {
+      const response = await api.get('/public/company-info');
+      return response.data;
+    } catch (error) {
+      console.warn('Utilisation des infos société de démo');
+      return {
+        success: true,
+        data: {
+          name: 'ByGagoos Ink',
+          tagline: 'Sérigraphie Textile d\'Excellence',
+          description: 'Entreprise familiale malgache',
+        },
+      };
+    }
+  },
+};
+
+// Vérification de la santé du backend
+export const checkBackendHealth = async () => {
+  try {
+    const response = await api.get('/health');
+    return {
+      healthy: true,
+      data: response.data,
+    };
+  } catch (error) {
+    console.warn('Backend non disponible - mode démo activé');
+    return {
+      healthy: false,
+      message: 'Backend non disponible, utilisation du mode démo',
+    };
+  }
 };
 
 // Export par défaut
